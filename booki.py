@@ -32,9 +32,17 @@ def print_books(books):
 		print("{}  {} by {} ({} pages)".format(short_id, book['title'], book['author'], page_count))
 
 
+def book_list_sort(book_list):
+	by_title = sorted(book_list, key=lambda book: book['title'])
+	by_author_first_name = sorted(by_title, key=lambda book: book['author'].split(' ')[0])
+	by_author_last_name = sorted(by_author_first_name, key=lambda book: book['author'].split(' ')[-1])
+	return by_author_last_name
+
+
 def search(args, list_to_search=universe):
 	if len(args) == 0:
-		print_books(list_to_search)
+		sorted_list = book_list_sort(list_to_search)
+		print_books(sorted_list)
 		return
 	if len(args) % 2 != 0:
 		print("need an even number of arguments")
