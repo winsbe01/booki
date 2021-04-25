@@ -120,7 +120,7 @@ def discover(args):
 		out_map['author'] = author_json_array['name']
 	
 	user_input = user_entry_from_file(out_map)
-	add_book_to_universe(book)
+	add_book_to_universe(user_input)
 
 
 def add_book_to_universe(book):
