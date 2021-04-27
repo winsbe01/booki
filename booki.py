@@ -159,6 +159,9 @@ def search(args, list_to_search=universe):
 
 	search_term = args[1].lower()
 	search_type = "in"
+	if search_term[0] == '^' and search_term[-1] == '$':
+		search_type = "full_string"
+		search_term = search_term[1:-1]
 	if search_term[0] == '^':
 		search_type = "start"
 		search_term = search_term[1:]
@@ -170,6 +173,8 @@ def search(args, list_to_search=universe):
 	for book in list_to_search:
 		candidate = book[args[0]].lower()
 		if search_type == "in" and search_term in candidate:
+			ret.append(book)
+		elif search_type == "full_string" and candidate.startswith(search_term) and candidate.endswith(search_term):
 			ret.append(book)
 		elif search_type == "start" and candidate.startswith(search_term):
 			ret.append(book)
