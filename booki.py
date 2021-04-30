@@ -13,9 +13,6 @@ from pathlib import Path
 
 EDITOR = os.environ.get('EDITOR', 'nano')
 
-universe = []
-universefile = Path("~/.config/booki/theuniverse").expanduser()
-
 shelvesdir = Path('~/.config/booki/shelves').expanduser()
 readfile = Path('~/.config/booki/shelves/read').expanduser()
 
@@ -26,12 +23,97 @@ base_url = 'https://openlibrary.org/'
 isbn_url = 'isbn/'
 json_ext = '.json'
 
-with open(str(universefile), 'r') as bookfil:
-	bookreader = csv.DictReader(bookfil, delimiter='|')
-	universe = list(bookreader)
-	universe_map = {}
-	for book in universe:
-		universe_map[book['id'][0:10]] = book
+class Shelf:
+
+	config_dir = '~/.config/booki'
+	shelves_dir = 'shelves'
+	default_universe_header = ['id', 'isbn', 'title', 'author', 'page_count']
+	default_shelf_header = ['id']
+
+	def __init__(self, shelf_name, is_universe=False):
+		self.shelf_name = shelf_name
+		self.is_universe = is_universe
+		self.data = None
+		self.is_changed = False
+		self._setup()
+
+	def _setup(self):
+		if self.is_universe:
+			self.shelf_file = Path(Shelf.config_dir).expanduser() / self.shelf_name
+			self.shelf_header = Shelf.default_universe_header
+		else:
+			self.shelf_file = Path(Shelf.config_dir).expanduser() / Shelf.shelves_dir / self.shelf_name
+			self.shelf_header = Shelf.default_shelf_header
+
+	def get_books(self):
+		if not self.data:
+			self._load_data_and_header()
+		return self.data
+
+	def get_book_short_ids(self):
+		if not self.data:
+			self._load_data_and_header()
+		return list(self.data.keys())
+
+	def get_book(self, book_short_id):
+		if self.has_book(book_short_id):
+			return self.data[book_short_id]
+
+	def add_book(self, book):
+		if not self.data:
+			self._load_data_and_header()
+		short_id = self._get_short_id(book)
+		if short_id not in self.data.keys():
+			self.data[short_id] = book
+			self.is_changed = True
+
+	def has_book(self, book):
+		if not self.data:
+			self._load_data_and_header()
+		return book in self.data.keys()
+
+	def exists(self):
+		return self.shelf_file.exists()
+
+	def create(self):
+		if not self.exists():
+			with open(str(self.shelf_file), 'w') as fil:
+				header_to_write = '|'.join(self.get_header())
+				fil.write(header_to_write + '\n')
+
+	def get_header(self):
+		return self.shelf_header
+
+	def get_header_without_id(self):
+		new_header = self.shelf_header[:]
+		new_header.remove('id')
+		return new_header
+
+	def save(self):
+		if self.exists() and self.is_changed:
+			with open(str(self.shelf_file), 'w') as fil:
+				writer = csv.DictWriter(fil, lineterminator='\n', delimiter='|', escapechar='\\', quoting=csv.QUOTE_NONE, quotechar='', fieldnames=self.get_header())
+				writer.writeheader()
+				for book in self.data.values():
+					writer.writerow(book)
+
+	def _get_short_id(self, book):
+		return book['id'][0:10]
+
+	def _load_data_and_header(self):
+		if self.exists():
+			self.data = {}
+			with open(str(self.shelf_file), 'r') as fil:
+				reader = csv.DictReader(fil, delimiter='|', quoting=csv.QUOTE_NONE)
+				self.shelf_header = reader.fieldnames
+				book_list = list(reader)
+				for book in book_list:
+					short_id = self._get_short_id(book)
+					self.data[short_id] = book
+
+
+universe_o = Shelf('theuniverse', is_universe=True)
+
 
 with open(str(readfile), 'r') as readfil:
 	readreader = csv.reader(readfil, delimiter='|')
@@ -68,6 +150,7 @@ def print_books(books):
 		if short_id in read_list:
 			read_marker = "> "
 		page_count = book['page_count'] if len(book['page_count']) > 0 else '??'
+
 		print("{}  {}{} by {} ({} pages)".format(short_id, read_marker, book['title'], book['author'], page_count))
 
 
@@ -92,8 +175,7 @@ def discover(args):
 		print("ERROR with: " + isbn)
 		return
 
-	universe_header = list(universe[0].keys())
-	universe_header.remove('id')
+	universe_header = universe_o.get_header_without_id()
 	out_map = {x: '' for x in universe_header}
 	out_map['isbn'] = args[0]
 
@@ -125,26 +207,24 @@ def discover(args):
 
 def add_book_to_universe(book):
 	book_id = hashlib.sha256(str(book).encode()).hexdigest()
-	if book_id[0:10] not in universe_map:
-		out_string = "{}|{}".format(book_id, "|".join(book.values()))
-		with open(str(universefile), 'a') as fil:
-			fil.write(out_string + '\n')
-		print("added book to universe!")
+	if not universe_o.has_book(book_id[0:10]):
 		book['id'] = book_id
+		universe_o.add_book(book)
+		universe_o.save()
+		print("added book to universe!")
 		print_books([book])
 	else:
 		print("that book already exists!")
 
 
 def add(args):
-	universe_header = list(universe[0].keys())
-	universe_header.remove('id')
+	universe_header = universe_o.get_header_without_id()
 	u_map = {x: '' for x in universe_header}
 	user_input = user_entry_from_file(u_map)
 	add_book_to_universe(user_input)
 
 
-def search(args, list_to_search=universe):
+def search(args, list_to_search=universe_o.get_books().values()):
 	if len(args) == 0:
 		sorted_list = book_list_sort(list_to_search)
 		print_books(sorted_list)
@@ -183,44 +263,40 @@ def search(args, list_to_search=universe):
 
 	search(args[2:], ret)
 
-
 def shelve(args):
 
 	if len(args) != 1:
 		print("need a shelf to shelve to")
 		return
 
-	shelf_file = shelvesdir / args[0]
+	shelf = Shelf(args[0])
 
-	if not shelf_file.exists():
-		print("no shelf named '" + args[0] + "'")
+	if not shelf.exists():
+		print("no shelf named '" + shelf.shelf_name + "'")
 		return
 
 	stdin = list(sys.stdin)
 
-	total = 0
-	with open(str(shelf_file), 'a') as fil:
-		for line in stdin:
-			book_id = line.split(' ')[0]
-			fil.write("{}\n".format(book_id))
-			total += 1
-	print("shelved " + str(total) + " books")
+	for line in stdin:
+		book_id = line.split(' ')[0]
+		book = {'id': book_id}
+		shelf.add_book(book)
+	shelf.save()
+	print("shelved " + str(len(stdin)) + " books")
+
 
 def shelf(args):
 	if len(args) != 1:
 		print("usage: 'shelf <shelf_name>'")
 		return
-	shelf_file = shelvesdir / args[0]
-	if not shelf_file.exists():
-		print("no shelf named '" + args[0] + "'")
-		return
-	
-	book_list = []
-	with open(str(shelf_file), 'r') as fil:
-		for line in fil:
-			book_list.append(universe_map[line.strip('\n')])
 
-	print_books(book_list)
+	shelf = Shelf(args[0])
+	if not shelf.exists():
+		print("no shelf named '" + shelf.shelf_name + "'")
+		return
+
+	to_print = [universe_o.get_book(x) for x in shelf.get_book_short_ids()]
+	print_books(to_print)
 	
 
 def shelves(args):
@@ -230,9 +306,8 @@ def shelves(args):
 				linecount = len(fil.readlines())
 				print("{}: {} books".format(shelf.name, str(linecount)))
 	elif len(args) == 2 and args[0] == 'add':
-		shelf_name = args[1]
-		shelf_path = shelvesdir / shelf_name
-		shelf_path.touch()
+		shelf = Shelf(args[1])
+		shelf.create()
 		print("added shelf: " + shelf_name)
 
 	else:
