@@ -113,13 +113,16 @@ class Shelf:
 
 
 universe_o = Shelf('theuniverse', is_universe=True)
+if not universe_o.exists():
+	universe_o.create()
 
 
-with open(str(readfile), 'r') as readfil:
-	readreader = csv.reader(readfil, delimiter='|')
-	read_list = []
-	for book in list(readreader):
-		read_list.append(book[0])
+read_list = []
+if readfile.exists():
+	with open(str(readfile), 'r') as readfil:
+		readreader = csv.reader(readfil, delimiter='|')
+		for book in list(readreader):
+			read_list.append(book[0])
 
 def user_entry_from_file(in_map):
 	before_contents = '\n'.join(["{}: {}".format(x, in_map[x]) for x in in_map.keys()])
@@ -224,7 +227,9 @@ def add(args):
 	add_book_to_universe(user_input)
 
 
-def search(args, list_to_search=universe_o.get_books().values()):
+def search(args, list_to_search=None):
+	if not list_to_search:
+		list_to_search = universe_o.get_books().values()
 	if len(args) == 0:
 		sorted_list = book_list_sort(list_to_search)
 		print_books(sorted_list)
@@ -303,7 +308,7 @@ def shelves(args):
 	if len(args) == 0:
 		for shelf in shelvesdir.iterdir():
 			with open(str(shelf), 'r') as fil:
-				linecount = len(fil.readlines())
+				linecount = len(fil.readlines()) - 1
 				print("{}: {} books".format(shelf.name, str(linecount)))
 	elif len(args) == 2 and args[0] == 'add':
 		shelf = Shelf(args[1])
@@ -313,11 +318,21 @@ def shelves(args):
 	else:
 		print("wrong args; use 'add <shelf_name>' or nothing")
 
+
 def main():
 	args = sys.argv[1:]
 
 	if len(args) == 0:
-		print("commands: 'search <author|title> <query>', 'shelves', 'shelve', 'shelf <shelf_name>'")
+		print("booki!")
+		print("find new books:")
+		print(" - add")
+		print(" - discover <isbn>")
+		print("search for books")
+		print(" - search <author|title> <query>")
+		print("manage shelves")
+		print(" - shelves <add <shelf_name>>")
+		print(" - shelf <shelf_name>")
+		print(" - shelve <shelf_name> (accepts stdin)")
 		return
 
 	option_dict = { 'search': search,
