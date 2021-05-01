@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import pty
 import hashlib
-import requests
+import urllib.request
 import json
 from pathlib import Path
 
@@ -169,9 +169,11 @@ def discover(args):
 	if len(args) != 1:
 		print("need an ISBN")
 		return
-	
-	response = requests.get(base_url + isbn_url + args[0] + json_ext)
-	json_text = response.text
+
+	full_url = base_url + isbn_url + args[0] + json_ext
+	with urllib.request.urlopen(full_url) as fil:
+		json_text = fil.read().decode('utf-8')
+
 	try:
 		json_array = json.loads(json_text)
 	except json.decoder.JSONDecodeError:
@@ -193,8 +195,9 @@ def discover(args):
 	if 'by_statement' in json_array:
 		out_map['author'] = json_array['by_statement']
 
-	author_response = requests.get(base_url + author_url + json_ext)
-	author_json_text = author_response.text
+	full_author_url = base_url + author_url + json_ext
+	with urllib.request.urlopen(full_author_url) as fil:
+		author_json_text = fil.read().decode('utf-8')
 	author_json_array = None
 	try:
 		author_json_array = json.loads(author_json_text)
