@@ -231,7 +231,7 @@ def add(args):
 
 
 def search(args, list_to_search=None):
-	if not list_to_search:
+	if list_to_search is None:
 		list_to_search = universe_o.get_books().values()
 	if len(args) == 0:
 		sorted_list = book_list_sort(list_to_search)
