@@ -308,18 +308,28 @@ def shelf(args):
 	
 
 def shelves(args):
-	if len(args) == 0:
-		for shelf in shelvesdir.iterdir():
-			with open(str(shelf), 'r') as fil:
-				linecount = len(fil.readlines()) - 1
-				print("{}: {} books".format(shelf.name, str(linecount)))
-	elif len(args) == 2 and args[0] == 'add':
-		shelf = Shelf(args[1])
-		shelf.create()
-		print("added shelf: " + shelf_name)
+	if len(args) != 0:
+		print("usage: 'shelves'")
+		return
 
-	else:
-		print("wrong args; use 'add <shelf_name>' or nothing")
+	for shelf in shelvesdir.iterdir():
+		with open(str(shelf), 'r') as fil:
+			linecount = len(fil.readlines()) - 1
+			print("{}: {} books".format(shelf.name, str(linecount)))
+
+
+def new(args):
+	if len(args) != 1:
+		print("usage: 'add <shelf_name'")
+		return
+
+	shelf = Shelf(args[0])
+	if shelf.exists():
+		print("already have a shelf named '{}'!".format(shelf.shelf_name))
+		return
+
+	shelf.create()
+	print("added shelf: " + shelf.shelf_name)
 
 
 def main():
@@ -333,9 +343,10 @@ def main():
 		print("search for books")
 		print(" - search <author|title> <query>")
 		print("manage shelves")
-		print(" - shelves <add <shelf_name>>")
+		print(" - shelves")
 		print(" - shelf <shelf_name>")
 		print(" - shelve <shelf_name> (accepts stdin)")
+		print(" - new <shelf_name>")
 		return
 
 	option_dict = { 'search': search,
@@ -343,7 +354,8 @@ def main():
 					'shelve': shelve,
 					'shelf': shelf,
 					'add': add,
-					'discover': discover }
+					'discover': discover,
+					'new': new }
 
 	if args[0] in option_dict.keys():
 		option_dict[args[0]](args[1:])
