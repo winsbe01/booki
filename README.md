@@ -12,9 +12,10 @@ search for booki books
   * query - a string to match (can use ^ and/or $ for beginning/end of string)
 
 manage shelves
-* `shelves <add <shelf_name>>` -> without arguments, lists all shelves and their counts. With `add`, lets you create a new shelf.
+* `shelves` -> list all shelves and their counts
 * `shelf <shelf_name>` -> list all books on the given shelf
 * `shelve <shelf_name>` -> add book(s) to shelf (book(s) accepted via stdin)
+* `new <shelf_name>` -> create a new shelf
 
 ## easter egg
 if you create a shelf called 'read', books on that shelf will have a '>' mark in front of them
