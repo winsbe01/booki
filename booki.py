@@ -123,8 +123,8 @@ def _get_shelves():
 	if not shelvesdir.exists():
 		shelvesdir.mkdir()
 	out = {}
-	for shelf_name in shelvesdir.iterdir():
-		out[shelf_name] = Shelf(shelf_name)
+	for shelf in shelvesdir.iterdir():
+		out[shelf.name] = Shelf(shelf)
 	return out
 
 shelves_map = _get_shelves()
@@ -324,9 +324,8 @@ def shelves(args):
 		print("usage: 'shelves'")
 		return
 
-	for shelf in shelves_map.values():
-		shelf_short_name = shelf.shelf_file.name
-		print("{}: {} books".format(shelf_short_name, str(shelf.get_book_count())))
+	for shelf_name, shelf in shelves_map.items():
+		print("{}: {} books".format(shelf_name, str(shelf.get_book_count())))
 
 
 def new(args):
