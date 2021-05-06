@@ -13,8 +13,6 @@ from pathlib import Path
 
 EDITOR = os.environ.get('EDITOR', 'nano')
 
-readfile = Path('~/.config/booki/shelves/read').expanduser()
-
 base_url = 'https://openlibrary.org/'
 isbn_url = 'isbn/'
 json_ext = '.json'
@@ -129,12 +127,6 @@ def _get_shelves():
 
 shelves_map = _get_shelves()
 
-read_list = []
-if readfile.exists():
-	with open(str(readfile), 'r') as readfil:
-		readreader = csv.reader(readfil, delimiter='|')
-		for book in list(readreader):
-			read_list.append(book[0])
 
 def user_entry_from_file(in_map):
 	before_contents = '\n'.join(["{}: {}".format(x, in_map[x]) for x in in_map.keys()])
@@ -162,7 +154,8 @@ def print_books(books):
 	for book in books:
 		short_id = book['id'][0:10]
 		read_marker = ""
-		if short_id in read_list:
+		#if short_id in read_list:
+		if 'read' in shelves_map.keys() and shelves_map['read'].has_book(short_id):
 			read_marker = "> "
 		page_count = book['page_count'] if len(book['page_count']) > 0 else '??'
 
