@@ -13,15 +13,12 @@ from pathlib import Path
 
 EDITOR = os.environ.get('EDITOR', 'nano')
 
-shelvesdir = Path('~/.config/booki/shelves').expanduser()
 readfile = Path('~/.config/booki/shelves/read').expanduser()
-
-if not shelvesdir.exists():
-	shelvesdir.mkdir()
 
 base_url = 'https://openlibrary.org/'
 isbn_url = 'isbn/'
 json_ext = '.json'
+
 
 class Shelf:
 
@@ -49,6 +46,11 @@ class Shelf:
 		if not self.data:
 			self._load_data_and_header()
 		return self.data
+
+	def get_book_count(self):
+		if not self.data:
+			self._load_data_and_header()
+		return len(self.data)
 
 	def get_book_short_ids(self):
 		if not self.data:
@@ -116,6 +118,16 @@ universe_o = Shelf('theuniverse', is_universe=True)
 if not universe_o.exists():
 	universe_o.create()
 
+def _get_shelves():
+	shelvesdir = Path('~/.config/booki/shelves').expanduser()
+	if not shelvesdir.exists():
+		shelvesdir.mkdir()
+	out = {}
+	for shelf_name in shelvesdir.iterdir():
+		out[shelf_name] = Shelf(shelf_name)
+	return out
+
+shelves_map = _get_shelves()
 
 read_list = []
 if readfile.exists():
@@ -312,10 +324,9 @@ def shelves(args):
 		print("usage: 'shelves'")
 		return
 
-	for shelf in shelvesdir.iterdir():
-		with open(str(shelf), 'r') as fil:
-			linecount = len(fil.readlines()) - 1
-			print("{}: {} books".format(shelf.name, str(linecount)))
+	for shelf in shelves_map.values():
+		shelf_short_name = shelf.shelf_file.name
+		print("{}: {} books".format(shelf_short_name, str(shelf.get_book_count())))
 
 
 def new(args):
