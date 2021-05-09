@@ -279,6 +279,26 @@ def add(args):
 	add_book_to_universe(user_input)
 
 
+def browse(args):
+
+	if len(args) != 1:
+		print("usage: browse <shelf_name>")
+		return
+
+	shelf = Shelf(args[0])
+
+	if not shelf.exists():
+		print("no shelf named '" + shelf.shelf_name + "'")
+		return
+
+	shelf_books = shelf.get_books()
+	for shelf_book_id in shelf_books.keys():
+		shelf_book = shelf_books[shelf_book_id]
+		book = universe_o.get_book(shelf_book['book_id'][0:10])
+		book['short_id'] = "{}.{}".format(shelf.shelf_name, shelf_book_id)
+		print_book(book)
+
+
 def search(args, list_to_search=None):
 	if list_to_search is None:
 		list_to_search = universe_o.get_books().values()
@@ -355,20 +375,6 @@ def shelve(args):
 	print("shelved " + str(len(stdin)) + " books")
 
 
-def shelf(args):
-	if len(args) != 1:
-		print("usage: 'shelf <shelf_name>'")
-		return
-
-	shelf = Shelf(args[0])
-	if not shelf.exists():
-		print("no shelf named '" + shelf.shelf_name + "'")
-		return
-
-	to_print = [universe_o.get_book(x) for x in shelf.get_book_short_ids()]
-	print_books(to_print)
-	
-
 def shelves(args):
 	if len(args) != 0:
 		print("usage: 'shelves'")
@@ -404,7 +410,7 @@ def main():
 		print(" - search <author|title> <query>")
 		print("manage shelves")
 		print(" - shelves")
-		print(" - shelf <shelf_name>")
+		print(" - browse <shelf_name>")
 		print(" - shelve <shelf_name> (accepts stdin)")
 		print(" - new <shelf_name>")
 		return
@@ -412,10 +418,10 @@ def main():
 	option_dict = { 'search': search,
 					'shelves': shelves,
 					'shelve': shelve,
-					'shelf': shelf,
 					'add': add,
 					'discover': discover,
-					'new': new }
+					'new': new,
+					'browse': browse, }
 
 	if args[0] in option_dict.keys():
 		option_dict[args[0]](args[1:])
