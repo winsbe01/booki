@@ -94,8 +94,9 @@ class Shelf:
 		if not self.data:
 			self._load_data_and_header()
 		self.shelf_header.append(attribute_name)
-		for book in self.data.values():
-			book[attribute_name] = ""
+		if self.data:
+			for book in self.data.values():
+				book[attribute_name] = ""
 		self.is_changed = True
 		return True
 
@@ -393,8 +394,17 @@ def new(args):
 		print("already have a shelf named '{}'!".format(shelf.shelf_name))
 		return
 
+	
+	new_attributes = input("attributes (sep. by comma): ")
+	attr_list = [x.strip() for x in new_attributes.split(',')]
+	attr_count = 0
+	for att in attr_list:
+		ret = shelf.add_attribute(att)
+		if ret:
+			attr_count += 1
+
 	shelf.create()
-	print("added shelf: " + shelf.shelf_name)
+	print("created shelf: " + shelf.shelf_name)
 
 
 def extend(args):
