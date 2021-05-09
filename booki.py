@@ -90,13 +90,14 @@ class Shelf:
 	def add_attribute(self, attribute_name):
 		if attribute_name in self.shelf_header:
 			print("can't add '{}'; already exists".format(attribute_name))
-			return
+			return False
 		if not self.data:
 			self._load_data_and_header()
 		self.shelf_header.append(attribute_name)
 		for book in self.data.values():
 			book[attribute_name] = ""
 		self.is_changed = True
+		return True
 
 	def get_header(self):
 		return self.shelf_header
@@ -396,6 +397,30 @@ def new(args):
 	print("added shelf: " + shelf.shelf_name)
 
 
+def extend(args):
+	if len(args) != 1:
+		print("usage: 'extend <shelf_name>'")
+		return
+
+	shelf = Shelf(args[0])
+
+	if not shelf.exists():
+		print("no shelf named '" + shelf.shelf_name + "'")
+		return
+
+	# TODO call "describe" to show what's already there
+
+	new_attributes = input("new attributes (sep. by comma): ")
+	attr_list = [x.strip() for x in new_attributes.split(',')]
+	attr_count = 0
+	for att in attr_list:
+		ret = shelf.add_attribute(att)
+		if ret:
+			attr_count += 1
+	shelf.save()
+	print("added {} new attribute{} to {}".format(str(attr_count), '' if attr_count == 1 else 's', shelf.shelf_name))
+
+
 def main():
 	args = sys.argv[1:]
 
@@ -409,8 +434,9 @@ def main():
 		print("manage shelves")
 		print(" - shelves")
 		print(" - browse <shelf_name>")
-		print(" - shelve <shelf_name> (accepts stdin)")
+		print(" - addto <shelf_name> (accepts stdin)")
 		print(" - new <shelf_name>")
+		print(" - extend <shelf_name>")
 		return
 
 	option_dict = { 'search': search,
@@ -419,7 +445,8 @@ def main():
 					'add': add,
 					'discover': discover,
 					'new': new,
-					'browse': browse, }
+					'browse': browse,
+					'extend': extend, }
 
 	if args[0] in option_dict.keys():
 		option_dict[args[0]](args[1:])
