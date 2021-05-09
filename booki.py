@@ -394,14 +394,15 @@ def new(args):
 		print("already have a shelf named '{}'!".format(shelf.shelf_name))
 		return
 
-	
 	new_attributes = input("attributes (sep. by comma): ")
 	attr_list = [x.strip() for x in new_attributes.split(',')]
+	print(attr_list)
 	attr_count = 0
 	for att in attr_list:
-		ret = shelf.add_attribute(att)
-		if ret:
-			attr_count += 1
+		if att != "":
+			ret = shelf.add_attribute(att)
+			if ret:
+				attr_count += 1
 
 	shelf.create()
 	print("created shelf: " + shelf.shelf_name)
@@ -424,9 +425,10 @@ def extend(args):
 	attr_list = [x.strip() for x in new_attributes.split(',')]
 	attr_count = 0
 	for att in attr_list:
-		ret = shelf.add_attribute(att)
-		if ret:
-			attr_count += 1
+		if att != "":
+			ret = shelf.add_attribute(att)
+			if ret:
+				attr_count += 1
 	shelf.save()
 	print("added {} new attribute{} to {}".format(str(attr_count), '' if attr_count == 1 else 's', shelf.shelf_name))
 
