@@ -338,10 +338,10 @@ def search(args, list_to_search=None):
 
 	search(args[2:], ret)
 
-def shelve(args):
+def addto(args):
 
 	if len(args) != 1:
-		print("need a shelf to shelve to")
+		print("usage: addto <shelf_name> (accepts stdin)")
 		return
 
 	shelf = Shelf(args[0])
@@ -415,7 +415,7 @@ def main():
 
 	option_dict = { 'search': search,
 					'shelves': shelves,
-					'shelve': shelve,
+					'addto': addto,
 					'add': add,
 					'discover': discover,
 					'new': new,
