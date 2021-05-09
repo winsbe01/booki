@@ -41,12 +41,10 @@ class Shelf:
 			self._load_data_and_header()
 		return self.data
 
-	'''
 	def get_book_count(self):
 		if not self.data:
 			self._load_data_and_header()
 		return len(self.data)
-	'''
 
 	def get_book_short_ids(self):
 		if not self.data:
