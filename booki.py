@@ -9,6 +9,7 @@ import pty
 import hashlib
 import urllib.request
 import json
+from datetime import datetime
 from pathlib import Path
 
 EDITOR = os.environ.get('EDITOR', 'nano')
@@ -20,35 +21,32 @@ json_ext = '.json'
 
 class Shelf:
 
-	config_dir = '~/.config/booki'
-	shelves_dir = 'shelves'
-	default_universe_header = ['id', 'isbn', 'title', 'author', 'page_count']
-	default_shelf_header = ['id']
+	shelves_dir = '~/.config/booki/shelves'
+	default_header = ['id', 'book_id']
 
-	def __init__(self, shelf_name, is_universe=False):
+	def __init__(self, shelf_name, shelf_path=None):
 		self.shelf_name = shelf_name
-		self.is_universe = is_universe
+		if not shelf_path:
+			shelf_path = Shelf.shelves_dir
+		self.shelf_file = Path(shelf_path).expanduser() / self.shelf_name
 		self.data = None
 		self.is_changed = False
-		self._setup()
-
-	def _setup(self):
-		if self.is_universe:
-			self.shelf_file = Path(Shelf.config_dir).expanduser() / self.shelf_name
-			self.shelf_header = Shelf.default_universe_header
+		if self.exists():
+			self.shelf_header = self._get_header_from_shelf()
 		else:
-			self.shelf_file = Path(Shelf.config_dir).expanduser() / Shelf.shelves_dir / self.shelf_name
-			self.shelf_header = Shelf.default_shelf_header
+			self.shelf_header = Shelf.default_header
 
 	def get_books(self):
 		if not self.data:
 			self._load_data_and_header()
 		return self.data
 
+	'''
 	def get_book_count(self):
 		if not self.data:
 			self._load_data_and_header()
 		return len(self.data)
+	'''
 
 	def get_book_short_ids(self):
 		if not self.data:
@@ -58,6 +56,13 @@ class Shelf:
 	def get_book(self, book_short_id):
 		if self.has_book(book_short_id):
 			return self.data[book_short_id]
+		else:
+			return None
+
+	def update_book(self, book_short_id, book):
+		if self.has_book(book_short_id):
+			self.data[book_short_id] = book
+			self.is_changed = True
 
 	def add_book(self, book):
 		if not self.data:
@@ -67,10 +72,13 @@ class Shelf:
 			self.data[short_id] = book
 			self.is_changed = True
 
-	def has_book(self, book):
+	def _gen_id(self):
+		return hashlib.sha256(str(datetime.now()).encode()).hexdigest()
+
+	def has_book(self, book_id):
 		if not self.data:
 			self._load_data_and_header()
-		return book in self.data.keys()
+		return book_id in self.data.keys()
 
 	def exists(self):
 		return self.shelf_file.exists()
@@ -81,12 +89,24 @@ class Shelf:
 				header_to_write = '|'.join(self.get_header())
 				fil.write(header_to_write + '\n')
 
+	def add_attribute(self, attribute_name):
+		if attribute_name in self.shelf_header:
+			print("can't add '{}'; already exists".format(attribute_name))
+			return
+		if not self.data:
+			self._load_data_and_header()
+		self.shelf_header.append(attribute_name)
+		for book in self.data.values():
+			book[attribute_name] = ""
+		self.is_changed = True
+
 	def get_header(self):
 		return self.shelf_header
 
-	def get_header_without_id(self):
+	def get_header_without_ids(self):
 		new_header = self.shelf_header[:]
 		new_header.remove('id')
+		new_header.remove('book_id')
 		return new_header
 
 	def save(self):
@@ -100,6 +120,11 @@ class Shelf:
 	def _get_short_id(self, book):
 		return book['id'][0:10]
 
+	def _get_header_from_shelf(self):
+		with open(str(self.shelf_file), 'r') as fil:
+			first_line = fil.readline().strip()
+		return first_line.split('|')
+
 	def _load_data_and_header(self):
 		if self.exists():
 			self.data = {}
@@ -112,7 +137,14 @@ class Shelf:
 					self.data[short_id] = book
 
 
-universe_o = Shelf('theuniverse', is_universe=True)
+class Universe(Shelf):
+
+	def __init__(self):
+		super().__init__('theuniverse', '~/.config/booki')
+		self.shelf_header = ['id', 'isbn', 'title', 'author', 'page_count']
+
+
+universe_o = Universe()
 if not universe_o.exists():
 	universe_o.create()
 
@@ -152,14 +184,26 @@ def user_entry_from_file(in_map):
 
 def print_books(books):
 	for book in books:
-		short_id = book['id'][0:10]
-		read_marker = ""
-		#if short_id in read_list:
-		if 'read' in shelves_map.keys() and shelves_map['read'].has_book(short_id):
-			read_marker = "> "
-		page_count = book['page_count'] if len(book['page_count']) > 0 else '??'
+		print_book(book)
 
-		print("{}  {}{} by {} ({} pages)".format(short_id, read_marker, book['title'], book['author'], page_count))
+
+def print_book(book):
+
+	if 'short_id' not in book:
+		book['short_id'] = book['id'][0:10]
+
+	if 'book_id' in book:
+		book_id = book['book_id']
+	else:
+		book_id = book['id']
+
+	read_marker = ""
+	if 'read' in shelves_map.keys():
+		for shelf_book_id, shelf_book in shelves_map['read'].get_books().items():
+			if shelf_book['book_id'] == book_id:
+				read_marker = "> "
+	page_count = book['page_count'] if len(book['page_count']) > 0 else '??'
+	print("{}  {}{} by {} ({} pages)".format(book['short_id'], read_marker, book['title'], book['author'], page_count))
 
 
 def book_list_sort(book_list):
@@ -291,9 +335,22 @@ def shelve(args):
 	stdin = list(sys.stdin)
 
 	for line in stdin:
-		book_id = line.split(' ')[0]
-		book = {'id': book_id}
-		shelf.add_book(book)
+
+		new_id = hashlib.sha256(str(datetime.now()).encode()).hexdigest()
+
+		book_short_id = line.split(' ')[0]
+		book = universe_o.get_book(book_short_id)
+
+		headers = shelf.get_header_without_ids()
+		header_map = {}
+		if len(headers) != 0:
+			header_map = {x: "" for x in headers}
+			out = user_entry_from_file(header_map)
+		
+		header_map['id'] = new_id
+		header_map['book_id'] = book['id']
+		shelf.add_book(header_map)
+
 	shelf.save()
 	print("shelved " + str(len(stdin)) + " books")
 
