@@ -17,6 +17,7 @@ manage shelves
 * `addto <shelf_name>` -> add book(s) to shelf (book(s) accepted via stdin)
 * `new <shelf_name>` -> create a new shelf
 * `extend <shelf_name>` -> add new attributes to a shelf
+* `describe` -> show additional attributes on shelf (if any)
 * `edit` -> edit additional attributes on book (if any) (accepts stdin)
 
 ## easter egg
