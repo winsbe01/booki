@@ -433,6 +433,51 @@ def extend(args):
 	print("added {} new attribute{} to {}".format(str(attr_count), '' if attr_count == 1 else 's', shelf.shelf_name))
 
 
+def edit(args):
+	if len(args) != 0:
+		print("usage: 'edit' (with stdin)")
+		return
+
+	stdin = list(sys.stdin)
+
+	if len(stdin) != 1:
+		print("you can only edit one entry at a time!")
+		return
+
+	shelf_and_id = stdin[0].split(' ')[0]
+	shelf_and_id_list = shelf_and_id.split('.')
+	if len(shelf_and_id_list) != 2:
+		print("need an appropriate shelf ID")
+		return
+
+	target_shelf = Shelf(shelf_and_id_list[0])
+	book = target_shelf.get_book(shelf_and_id_list[1])
+	if book:
+		# get the headers without IDs
+		header_list = target_shelf.get_header_without_ids()
+		
+		if len(header_list) == 0:
+			print("no additional data to edit")
+			return
+
+		# add data from book
+		book_map = { x: book[x] for x in header_list }
+		# user edit
+		user_input = user_entry_from_file(book_map)
+		# update the book on the shelf
+		for key, val in user_input.items():
+			book[key] = val
+
+		target_shelf.update_book(shelf_and_id_list[1], book)
+		target_shelf.save()
+
+		print("updated!")
+
+	else:
+		print("can't find book on shelf...")
+		return
+
+
 def main():
 	args = sys.argv[1:]
 
@@ -449,6 +494,7 @@ def main():
 		print(" - addto <shelf_name> (accepts stdin)")
 		print(" - new <shelf_name>")
 		print(" - extend <shelf_name>")
+		print(" - edit (accepts stdin)")
 		return
 
 	option_dict = { 'search': search,
@@ -458,7 +504,8 @@ def main():
 					'discover': discover,
 					'new': new,
 					'browse': browse,
-					'extend': extend, }
+					'extend': extend,
+					'edit': edit, }
 
 	if args[0] in option_dict.keys():
 		option_dict[args[0]](args[1:])
