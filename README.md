@@ -19,6 +19,7 @@ manage shelves
 * `extend <shelf_name>` -> add new attributes to a shelf
 * `describe` -> show additional attributes on shelf (if any)
 * `edit` -> edit additional attributes on book (if any) (accepts stdin)
+* `show` -> show additional attributes on book (if any) (accepts stdin)
 
 ## easter egg
 if you create a shelf called 'read', books on that shelf will have a '>' mark in front of them

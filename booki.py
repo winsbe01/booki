@@ -409,6 +409,27 @@ def new(args):
 	print("created shelf: " + shelf.shelf_name)
 
 
+def show(args):
+	if len(args) != 0:
+		print("usage: 'edit' (with stdin)")
+		return
+
+	stdin = list(sys.stdin)
+
+	for line in stdin:
+		shelf_and_id = line.split(' ')[0]
+		shelf_and_id_list = shelf_and_id.split('.')
+		shelf = Shelf(shelf_and_id_list[0])
+		if not shelf.exists():
+			print("no such shelf " + shelf.shelf_name + ", nothing to show")
+			break
+		print(line.strip('\n'))
+		headers = shelf.get_header_without_ids()
+		book = shelf.get_book(shelf_and_id_list[1])
+		for attr in headers:
+			print(" - {}: {}".format(attr, book[attr]))
+
+
 def describe(args):
 	if len(args) != 1:
 		print("usage: 'describe <shelf_name>'")
@@ -515,6 +536,8 @@ def main():
 		print(" - new <shelf_name>")
 		print(" - extend <shelf_name>")
 		print(" - edit (accepts stdin)")
+		print(" - describe <shelf_name>")
+		print(" - show (accepts stdin)")
 		return
 
 	option_dict = { 'search': search,
@@ -526,7 +549,8 @@ def main():
 					'browse': browse,
 					'extend': extend,
 					'edit': edit, 
-					'describe': describe, }
+					'describe': describe, 
+					'show': show, }
 
 	if args[0] in option_dict.keys():
 		option_dict[args[0]](args[1:])
