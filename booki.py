@@ -106,7 +106,8 @@ class Shelf:
 	def get_header_without_ids(self):
 		new_header = self.shelf_header[:]
 		new_header.remove('id')
-		new_header.remove('book_id')
+		if 'book_id' in new_header:
+			new_header.remove('book_id')
 		return new_header
 
 	def save(self):
@@ -229,7 +230,7 @@ def discover(args):
 		print("ERROR with: " + isbn)
 		return
 
-	universe_header = universe_o.get_header_without_id()
+	universe_header = universe_o.get_header_without_ids()
 	out_map = {x: '' for x in universe_header}
 	out_map['isbn'] = args[0]
 
@@ -273,7 +274,7 @@ def add_book_to_universe(book):
 
 
 def add(args):
-	universe_header = universe_o.get_header_without_id()
+	universe_header = universe_o.get_header_without_ids()
 	u_map = {x: '' for x in universe_header}
 	user_input = user_entry_from_file(u_map)
 	add_book_to_universe(user_input)
