@@ -13,9 +13,11 @@ search for booki books
 
 manage shelves
 * `shelves` -> list all shelves and their counts
-* `shelf <shelf_name>` -> list all books on the given shelf
-* `shelve <shelf_name>` -> add book(s) to shelf (book(s) accepted via stdin)
+* `browse <shelf_name>` -> list all books on the given shelf
+* `addto <shelf_name>` -> add book(s) to shelf (book(s) accepted via stdin)
 * `new <shelf_name>` -> create a new shelf
+* `extend <shelf_name>` -> add new attributes to a shelf
+* `edit` -> edit additional attributes on book (if any) (accepts stdin)
 
 ## easter egg
 if you create a shelf called 'read', books on that shelf will have a '>' mark in front of them
