@@ -409,6 +409,24 @@ def new(args):
 	print("created shelf: " + shelf.shelf_name)
 
 
+def describe(args):
+	if len(args) != 1:
+		print("usage: 'describe <shelf_name>'")
+		return
+
+	shelf = Shelf(args[0])
+
+	if not shelf.exists():
+		print("no shelf named '" + shelf.shelf_name + "'")
+		return
+
+	attribute_list = shelf.get_header_without_ids()
+	if len(attribute_list) == 0:
+		print("no current attributes for " + shelf.shelf_name)
+	else:
+		print("current attributes of {}: {}".format(shelf.shelf_name, ", ".join(attribute_list)))
+
+
 def extend(args):
 	if len(args) != 1:
 		print("usage: 'extend <shelf_name>'")
@@ -421,6 +439,7 @@ def extend(args):
 		return
 
 	# TODO call "describe" to show what's already there
+	describe(args)
 
 	new_attributes = input("new attributes (sep. by comma): ")
 	attr_list = [x.strip() for x in new_attributes.split(',')]
@@ -506,7 +525,8 @@ def main():
 					'new': new,
 					'browse': browse,
 					'extend': extend,
-					'edit': edit, }
+					'edit': edit, 
+					'describe': describe, }
 
 	if args[0] in option_dict.keys():
 		option_dict[args[0]](args[1:])
