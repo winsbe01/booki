@@ -30,6 +30,7 @@ class Shelf:
 			shelf_path = Shelf.shelves_dir
 		self.shelf_file = Path(shelf_path).expanduser() / self.shelf_name
 		self.data = None
+		self.book_ids = []
 		self.is_changed = False
 		if self.exists():
 			self.shelf_header = self._get_header_from_shelf()
@@ -77,6 +78,11 @@ class Shelf:
 		if not self.data:
 			self._load_data_and_header()
 		return book_id in self.data.keys()
+
+	def get_universe_books(self):
+		if not self.data:
+			self._load_data_and_header()
+		return self.book_ids
 
 	def exists(self):
 		return self.shelf_file.exists()
@@ -136,6 +142,10 @@ class Shelf:
 				for book in book_list:
 					short_id = self._get_short_id(book)
 					self.data[short_id] = book
+					if 'book_id' in book:
+						self.book_ids.append(book['book_id'])
+					else:
+						self.book_ids.append(book['id'])
 
 
 class Universe(Shelf):
@@ -198,13 +208,13 @@ def print_book(book):
 	else:
 		book_id = book['id']
 
-	read_marker = ""
-	if 'read' in shelves_map.keys():
-		for shelf_book_id, shelf_book in shelves_map['read'].get_books().items():
-			if shelf_book['book_id'] == book_id:
-				read_marker = "> "
-	page_count = book['page_count'] if len(book['page_count']) > 0 else '??'
-	print("{}  {}{} by {} ({} pages)".format(book['short_id'], read_marker, book['title'], book['author'], page_count))
+	on_shelves = []
+	for shelf_name, shelf in shelves_map.items():
+		if book_id in shelf.get_universe_books():
+			on_shelves.append(shelf_name)
+
+	read_marker = "> " if 'read' in on_shelves else ""
+	print("{}  {}{} by {}".format(book['short_id'], read_marker, book['title'], book['author']))
 
 
 def book_list_sort(book_list):
