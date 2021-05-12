@@ -310,6 +310,28 @@ def browse(args):
 		print_book(book)
 
 
+def shelfsearch(args):
+	if len(args) % 2 != 1:
+		print("usage: 'shelfsearch <shelf_name> <...search...>")
+		return
+	
+	shelf = Shelf(args[0])
+
+	if not shelf.exists():
+		print("no shelf named '" + shelf.shelf_name + "'")
+		return
+
+	book_list = []
+	shelf_books = shelf.get_books()
+	for shelf_book_id in shelf_books.keys():
+		shelf_book = shelf_books[shelf_book_id]
+		book = universe_o.get_book(shelf_book['book_id'][0:10])
+		book['short_id'] = "{}.{}".format(shelf.shelf_name, shelf_book_id)
+		book_list.append(book)
+
+	search(args[1:], book_list)
+
+
 def search(args, list_to_search=None):
 	if list_to_search is None:
 		list_to_search = universe_o.get_books().values()
@@ -560,7 +582,8 @@ def main():
 					'extend': extend,
 					'edit': edit, 
 					'describe': describe, 
-					'show': show, }
+					'show': show,
+					'shelfsearch': shelfsearch, }
 
 	if args[0] in option_dict.keys():
 		option_dict[args[0]](args[1:])

@@ -10,6 +10,7 @@ search for booki books
 * `search <type> <query>` -> search for a book
   * type - either `title` or `author`
   * query - a string to match (can use ^ and/or $ for beginning/end of string)
+* `shelfsearch <shelf_name> <...>` -> search on a given shelf, using the same parameters
 
 manage shelves
 * `shelves` -> list all shelves and their counts
