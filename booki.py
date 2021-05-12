@@ -525,12 +525,14 @@ def edit(args):
 
 	shelf_and_id = stdin[0].split(' ')[0]
 	shelf_and_id_list = shelf_and_id.split('.')
-	if len(shelf_and_id_list) != 2:
-		print("need an appropriate shelf ID")
-		return
 
-	target_shelf = Shelf(shelf_and_id_list[0])
-	book = target_shelf.get_book(shelf_and_id_list[1])
+	if len(shelf_and_id_list) == 1:
+		target_shelf = universe_o
+	else:
+		target_shelf = Shelf(shelf_and_id_list[0])
+		shelf_and_id_list.pop(0)
+
+	book = target_shelf.get_book(shelf_and_id_list[0])
 	if book:
 		# get the headers without IDs
 		header_list = target_shelf.get_header_without_ids()
@@ -547,7 +549,7 @@ def edit(args):
 		for key, val in user_input.items():
 			book[key] = val
 
-		target_shelf.update_book(shelf_and_id_list[1], book)
+		target_shelf.update_book(shelf_and_id_list[0], book)
 		target_shelf.save()
 
 		print("updated!")
