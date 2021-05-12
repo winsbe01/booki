@@ -451,13 +451,19 @@ def show(args):
 	for line in stdin:
 		shelf_and_id = line.split(' ')[0]
 		shelf_and_id_list = shelf_and_id.split('.')
-		shelf = Shelf(shelf_and_id_list[0])
+
+		if len(shelf_and_id_list) == 1:
+			shelf = universe_o
+		else:
+			shelf = Shelf(shelf_and_id_list[0])
+			shelf_and_id_list.pop(0)
+
 		if not shelf.exists():
 			print("no such shelf " + shelf.shelf_name + ", nothing to show")
 			break
 		print(line.strip('\n'))
 		headers = shelf.get_header_without_ids()
-		book = shelf.get_book(shelf_and_id_list[1])
+		book = shelf.get_book(shelf_and_id_list[0])
 		for attr in headers:
 			print(" - {}: {}".format(attr, book[attr]))
 
