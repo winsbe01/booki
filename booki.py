@@ -47,10 +47,12 @@ class Shelf:
 			self._load_data_and_header()
 		return len(self.data)
 
+	'''
 	def get_book_short_ids(self):
 		if not self.data:
 			self._load_data_and_header()
 		return list(self.data.keys())
+	'''
 
 	def get_book(self, book_short_id):
 		if self.has_book(book_short_id):
@@ -71,8 +73,10 @@ class Shelf:
 			self.data[short_id] = book
 			self.is_changed = True
 
+	'''
 	def _gen_id(self):
 		return hashlib.sha256(str(datetime.now()).encode()).hexdigest()
+	'''
 
 	def has_book(self, book_id):
 		if not self.data:
@@ -165,14 +169,18 @@ def _get_shelves():
 		shelvesdir.mkdir()
 	out = {}
 	for shelf in shelvesdir.iterdir():
-		out[shelf.name] = Shelf(shelf)
+		out[shelf.name] = Shelf(shelf.name)
 	return out
 
 shelves_map = _get_shelves()
 
+def user_entry_from_file(in_map, comment=None):
 
-def user_entry_from_file(in_map):
-	before_contents = '\n'.join(["{}: {}".format(x, in_map[x]) for x in in_map.keys()])
+	before_contents = ""
+
+	if comment is not None:
+		before_contents = "# {}\n".format(comment)
+	before_contents += '\n'.join(["{}: {}".format(x, in_map[x]) for x in in_map.keys()])
 	
 	with tempfile.NamedTemporaryFile(delete=False) as tmpfil:
 		tmpfil.write(before_contents.encode('utf-8'))
@@ -185,6 +193,8 @@ def user_entry_from_file(in_map):
 
 	after_contents_list = after_contents.strip().split('\n')
 	for line in after_contents_list:
+		if line[0] == "#":
+			pass
 		line_list = line.split(':')
 		key = line_list[0].strip()
 		if key in in_map:
@@ -197,8 +207,10 @@ def print_books(books):
 	for book in books:
 		print_book(book)
 
-
 def print_book(book):
+	print(format_book_for_print(book))
+
+def format_book_for_print(book):
 
 	if 'short_id' not in book:
 		book['short_id'] = book['id'][0:10]
@@ -214,7 +226,7 @@ def print_book(book):
 			on_shelves.append(shelf_name)
 
 	read_marker = "> " if 'read' in on_shelves else ""
-	print("{}  {}{} by {}".format(book['short_id'], read_marker, book['title'], book['author']))
+	return "{}  {}{} by {}".format(book['short_id'], read_marker, book['title'], book['author'])
 
 
 def book_list_sort(book_list):
@@ -267,7 +279,8 @@ def discover(args):
 	if author_json_array and 'name' in author_json_array:
 		out_map['author'] = author_json_array['name']
 	
-	user_input = user_entry_from_file(out_map)
+	comment = "discovering a book from ISBN" + args[0]
+	user_input = user_entry_from_file(out_map, comment)
 	add_book_to_universe(user_input)
 
 
@@ -286,7 +299,8 @@ def add_book_to_universe(book):
 def add(args):
 	universe_header = universe_o.get_header_without_ids()
 	u_map = {x: '' for x in universe_header}
-	user_input = user_entry_from_file(u_map)
+	comment = "adding a book from scratch"
+	user_input = user_entry_from_file(u_map, comment)
 	add_book_to_universe(user_input)
 
 
@@ -296,11 +310,11 @@ def browse(args):
 		print("usage: browse <shelf_name>")
 		return
 
-	shelf = Shelf(args[0])
-
-	if not shelf.exists():
-		print("no shelf named '" + shelf.shelf_name + "'")
+	if args[0] not in shelves_map:
+		print("no shelf named '" + args[0] + "'")
 		return
+
+	shelf = shelves_map[args[0]]
 
 	shelf_books = shelf.get_books()
 	for shelf_book_id in shelf_books.keys():
@@ -315,11 +329,11 @@ def shelfsearch(args):
 		print("usage: 'shelfsearch <shelf_name> <...search...>")
 		return
 	
-	shelf = Shelf(args[0])
-
-	if not shelf.exists():
-		print("no shelf named '" + shelf.shelf_name + "'")
+	if args[0] not in shelves_map:
+		print("no shelf named '" + args[0] + "'")
 		return
+
+	shelf = shelves_map[args[0]]
 
 	book_list = []
 	shelf_books = shelf.get_books()
@@ -379,11 +393,11 @@ def addto(args):
 		print("usage: addto <shelf_name> (accepts stdin)")
 		return
 
-	shelf = Shelf(args[0])
-
-	if not shelf.exists():
-		print("no shelf named '" + shelf.shelf_name + "'")
+	if args[0] not in shelves_map:
+		print("no shelf named '" + args[0] + "'")
 		return
+
+	shelf = shelves_map[args[0]]
 
 	stdin = list(sys.stdin)
 
@@ -397,8 +411,9 @@ def addto(args):
 		headers = shelf.get_header_without_ids()
 		header_map = {}
 		if len(headers) != 0:
+			comment = "adding to {}: {}".format(shelf.shelf_name, format_book_for_print(book))
 			header_map = {x: "" for x in headers}
-			out = user_entry_from_file(header_map)
+			out = user_entry_from_file(header_map, comment)
 		
 		header_map['id'] = new_id
 		header_map['book_id'] = book['id']
@@ -422,11 +437,11 @@ def new(args):
 		print("usage: 'add <shelf_name'")
 		return
 
-	shelf = Shelf(args[0])
-	if shelf.exists():
-		print("already have a shelf named '{}'!".format(shelf.shelf_name))
+	if args[0] in shelves_map:
+		print("already have a shelf named '{}'!".format(args[0]))
 		return
 
+	shelf = Shelf(args[0])
 	new_attributes = input("attributes (sep. by comma): ")
 	attr_list = [x.strip() for x in new_attributes.split(',')]
 	print(attr_list)
@@ -473,11 +488,11 @@ def describe(args):
 		print("usage: 'describe <shelf_name>'")
 		return
 
-	shelf = Shelf(args[0])
-
-	if not shelf.exists():
-		print("no shelf named '" + shelf.shelf_name + "'")
+	if args[0] not in shelves_map:
+		print("no shelf named '" + args[0] + "'")
 		return
+
+	shelf = shelves_map[args[0]]
 
 	attribute_list = shelf.get_header_without_ids()
 	if len(attribute_list) == 0:
@@ -491,13 +506,12 @@ def extend(args):
 		print("usage: 'extend <shelf_name>'")
 		return
 
-	shelf = Shelf(args[0])
-
-	if not shelf.exists():
-		print("no shelf named '" + shelf.shelf_name + "'")
+	if args[0] not in shelves_map:
+		print("no shelf named '" + args[0] + "'")
 		return
 
-	# TODO call "describe" to show what's already there
+	shelf = shelves_map[args[0]]
+
 	describe(args)
 
 	new_attributes = input("new attributes (sep. by comma): ")
@@ -534,6 +548,13 @@ def edit(args):
 
 	book = target_shelf.get_book(shelf_and_id_list[0])
 	if book:
+
+		# get the universe book
+		if 'book_id' in book:
+			universe_book = universe_o.get_book(book['book_id'][0:10])
+		else:
+			universe_book = book
+
 		# get the headers without IDs
 		header_list = target_shelf.get_header_without_ids()
 		
@@ -544,7 +565,8 @@ def edit(args):
 		# add data from book
 		book_map = { x: book[x] for x in header_list }
 		# user edit
-		user_input = user_entry_from_file(book_map)
+		comment = "editing on {}: {}".format(target_shelf.shelf_name, format_book_for_print(universe_book))
+		user_input = user_entry_from_file(book_map, comment)
 		# update the book on the shelf
 		for key, val in user_input.items():
 			book[key] = val
