@@ -292,6 +292,18 @@ def add_book_to_universe(book):
 		universe_o.save()
 		print("added book to universe!")
 		print_books([book])
+		shelves_in = input("add book to shelves: ")
+		shelves_list = [x.strip() for x in shelves_in.split(',')]
+		if len(shelves_list) == 1 and shelves_list[0] == "":
+			return
+		for shelf in shelves_list:
+			if shelf in shelves_map:
+				add_book_to_shelf(book, shelves_map[shelf])
+				print("added to " + shelf)
+				shelves_map[shelf].save()
+			else:
+				print("no shelf named '{}'".format(shelf.shelf_name))
+				
 	else:
 		print("that book already exists!")
 
@@ -387,6 +399,21 @@ def search(args, list_to_search=None):
 
 	search(args[2:], ret)
 
+def add_book_to_shelf(book, shelf):
+	new_id = hashlib.sha256(str(datetime.now()).encode()).hexdigest()
+
+	headers = shelf.get_header_without_ids()
+	header_map = {}
+	if len(headers) != 0:
+		comment = "adding to {}: {}".format(shelf.shelf_name, format_book_for_print(book))
+		header_map = {x: "" for x in headers}
+		out = user_entry_from_file(header_map, comment)
+	
+	header_map['id'] = new_id
+	header_map['book_id'] = book['id']
+	shelf.add_book(header_map)
+
+
 def addto(args):
 
 	if len(args) != 1:
@@ -403,21 +430,10 @@ def addto(args):
 
 	for line in stdin:
 
-		new_id = hashlib.sha256(str(datetime.now()).encode()).hexdigest()
-
 		book_short_id = line.split(' ')[0]
 		book = universe_o.get_book(book_short_id)
 
-		headers = shelf.get_header_without_ids()
-		header_map = {}
-		if len(headers) != 0:
-			comment = "adding to {}: {}".format(shelf.shelf_name, format_book_for_print(book))
-			header_map = {x: "" for x in headers}
-			out = user_entry_from_file(header_map, comment)
-		
-		header_map['id'] = new_id
-		header_map['book_id'] = book['id']
-		shelf.add_book(header_map)
+		add_book_to_shelf(book, shelf)
 
 	shelf.save()
 	print("shelved " + str(len(stdin)) + " books")
