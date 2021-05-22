@@ -5,7 +5,6 @@ import os
 import time
 import subprocess
 import tempfile
-import pty
 import hashlib
 import urllib.request
 import json
