@@ -639,7 +639,9 @@ def edit(args):
 		for key, val in user_input.items():
 			book[key] = val
 
-		book.pop('short_id') # don't add the short_id!
+		# TODO: this should be cleaner, probably part of a book itself
+		if 'short_id' in book:
+			book.pop('short_id')
 		target_shelf.update_book(book['id'][0:10], book)
 		target_shelf.save()
 
