@@ -335,7 +335,7 @@ def browse(args):
 	shelf_books = shelf.get_books()
 	for shelf_book_id in shelf_books.keys():
 		shelf_book = shelf_books[shelf_book_id]
-		book = universe_o.get_book(shelf_book['book_id'][0:10])
+		book = universe_o.get_book(shelf_book['book_id'][0:10]).copy()
 		book['short_id'] = "{}.{}".format(shelf.shelf_name, shelf_book_id)
 		print_book(book)
 
@@ -355,7 +355,7 @@ def shelfsearch(args):
 	shelf_books = shelf.get_books()
 	for shelf_book_id in shelf_books.keys():
 		shelf_book = shelf_books[shelf_book_id]
-		book = universe_o.get_book(shelf_book['book_id'][0:10])
+		book = universe_o.get_book(shelf_book['book_id'][0:10]).copy()
 		book['short_id'] = "{}.{}".format(shelf.shelf_name, shelf_book_id)
 		book_list.append(book)
 
