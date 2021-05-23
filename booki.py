@@ -351,6 +351,17 @@ def add(args):
 	add_book_to_universe(user_input)
 
 
+def _get_books_from_shelf_with_short_ids(shelf):
+	book_list = []
+	shelf_books = shelf.get_books()
+	for shelf_book_id in shelf_books.keys():
+		shelf_book = shelf_books[shelf_book_id]
+		book = universe_o.get_book(shelf_book['book_id'][0:10]).copy()
+		book['short_id'] = "{}.{}".format(shelf.shelf_name, shelf_book_id)
+		book_list.append(book)
+	return book_list
+
+
 def browse(args):
 
 	if len(args) != 1:
@@ -362,13 +373,8 @@ def browse(args):
 		return
 
 	shelf = shelves_map[args[0]]
-
-	shelf_books = shelf.get_books()
-	for shelf_book_id in shelf_books.keys():
-		shelf_book = shelf_books[shelf_book_id]
-		book = universe_o.get_book(shelf_book['book_id'][0:10]).copy()
-		book['short_id'] = "{}.{}".format(shelf.shelf_name, shelf_book_id)
-		print_book(book)
+	book_list = _get_books_from_shelf_with_short_ids(shelf)
+	print_books(book_list)
 
 
 def shelfsearch(args):
@@ -381,15 +387,7 @@ def shelfsearch(args):
 		return
 
 	shelf = shelves_map[args[0]]
-
-	book_list = []
-	shelf_books = shelf.get_books()
-	for shelf_book_id in shelf_books.keys():
-		shelf_book = shelf_books[shelf_book_id]
-		book = universe_o.get_book(shelf_book['book_id'][0:10]).copy()
-		book['short_id'] = "{}.{}".format(shelf.shelf_name, shelf_book_id)
-		book_list.append(book)
-
+	book_list = _get_books_from_shelf_with_short_ids(shelf)
 	search(args[1:], book_list)
 
 
