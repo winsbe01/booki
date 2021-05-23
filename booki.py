@@ -240,6 +240,37 @@ def book_list_sort(book_list):
 	return by_author_last_name
 
 
+def _get_shelf_book_tuple(line_in):
+	line_in_list = line_in.split(' ')
+
+	# check for bad input
+	if len(line_in_list) == 1 and len(line_in_list[0]) == '':
+		return None
+
+	shelf_and_id_list = line_in_list[0].split('.')
+
+	if len(shelf_and_id_list) == 1:
+		first_item = shelf_and_id_list[0]
+		if len(first_item) == 0:
+			return None
+		# if the first item is not empty, it's a universe book
+		else:
+			return (universe_o, universe_o.get_book(first_item))
+
+	elif len(shelf_and_id_list) == 2:
+		shelf_name = shelf_and_id_list[0]
+		book_id = shelf_and_id_list[1]
+		if shelf_name not in shelves_map:
+			print("shelf doesn't exist: " + shelf_name)
+			return None
+
+		shelf = shelves_map[shelf_name]
+		return (shelf, shelf.get_book(book_id))
+
+	else:
+		return None
+
+
 def discover(args):
 
 	if len(args) != 1:
@@ -434,9 +465,7 @@ def addto(args):
 
 	for line in stdin:
 
-		book_short_id = line.split(' ')[0]
-		book = universe_o.get_book(book_short_id)
-
+		book = _get_shelf_book_tuple(line)[1]
 		add_book_to_shelf(book, shelf)
 
 	shelf.save()
@@ -453,22 +482,17 @@ def pull(args):
 
 	count = 0
 	for line in stdin:
-		shelf_and_id = line.split(' ')[0]
-		shelf_and_id_list = shelf_and_id.split('.')
+		shelf_and_book = _get_shelf_book_tuple(line)
+		shelf = shelf_and_book[0]
+		book = shelf_and_book[1]
 
-		if len(shelf_and_id_list) != 2:
+		if shelf.shelf_name == universe_o.shelf_name: # can't pull a book from the universe
 			print("can only pull a book from a shelf")
-			pass
+			break
 
-		elif shelf_and_id_list[0] not in shelves_map:
-			print("no shelf named '" + shelf_and_id_list[0] + "'")
-			pass
-
-		else:
-			shelf = shelves_map[shelf_and_id_list[0]]
-			shelf.remove_book(shelf_and_id_list[1])
-			shelf.save()
-			count += 1
+		shelf.remove_book(book['id'][0:10])
+		shelf.save()
+		count += 1
 
 	if count != 0:
 		s = 's' if count != 1 else ''
@@ -516,21 +540,17 @@ def show(args):
 	stdin = list(sys.stdin)
 
 	for line in stdin:
-		shelf_and_id = line.split(' ')[0]
-		shelf_and_id_list = shelf_and_id.split('.')
-
-		if len(shelf_and_id_list) == 1:
-			shelf = universe_o
-		else:
-			shelf = Shelf(shelf_and_id_list[0])
-			shelf_and_id_list.pop(0)
-
-		if not shelf.exists():
-			print("no such shelf " + shelf.shelf_name + ", nothing to show")
+		
+		shelf_and_book = _get_shelf_book_tuple(line)
+		if not shelf_and_book:
+			print("error: " + str(shelf_and_book))
 			break
+
+		shelf = shelf_and_book[0]
+		book = shelf_and_book[1]
+
 		print(line.strip('\n'))
 		headers = shelf.get_header_without_ids()
-		book = shelf.get_book(shelf_and_id_list[0])
 		for attr in headers:
 			print(" - {}: {}".format(attr, book[attr]))
 
@@ -589,16 +609,14 @@ def edit(args):
 		print("you can only edit one entry at a time!")
 		return
 
-	shelf_and_id = stdin[0].split(' ')[0]
-	shelf_and_id_list = shelf_and_id.split('.')
+	shelf_and_book = _get_shelf_book_tuple(stdin[0])
 
-	if len(shelf_and_id_list) == 1:
-		target_shelf = universe_o
-	else:
-		target_shelf = Shelf(shelf_and_id_list[0])
-		shelf_and_id_list.pop(0)
+	if not shelf_and_book:
+		print("error!")
+		return
 
-	book = target_shelf.get_book(shelf_and_id_list[0])
+	target_shelf = shelf_and_book[0]
+	book = shelf_and_book[1]
 	if book:
 
 		# get the universe book
@@ -623,7 +641,8 @@ def edit(args):
 		for key, val in user_input.items():
 			book[key] = val
 
-		target_shelf.update_book(shelf_and_id_list[0], book)
+		book.pop('short_id') # don't add the short_id!
+		target_shelf.update_book(book['id'][0:10], book)
 		target_shelf.save()
 
 		print("updated!")
