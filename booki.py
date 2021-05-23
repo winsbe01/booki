@@ -72,6 +72,11 @@ class Shelf:
 			self.data[short_id] = book
 			self.is_changed = True
 
+	def remove_book(self, book_short_id):
+		if self.has_book(book_short_id):
+			self.data.pop(book_short_id)
+			self.is_changed = True
+
 	'''
 	def _gen_id(self):
 		return hashlib.sha256(str(datetime.now()).encode()).hexdigest()
@@ -438,6 +443,38 @@ def addto(args):
 	print("shelved " + str(len(stdin)) + " books")
 
 
+def pull(args):
+
+	if len(args) != 0:
+		print("usage: pull (accepts stdin)")
+		return
+
+	stdin = list(sys.stdin)
+
+	count = 0
+	for line in stdin:
+		shelf_and_id = line.split(' ')[0]
+		shelf_and_id_list = shelf_and_id.split('.')
+
+		if len(shelf_and_id_list) != 2:
+			print("can only pull a book from a shelf")
+			pass
+
+		elif shelf_and_id_list[0] not in shelves_map:
+			print("no shelf named '" + shelf_and_id_list[0] + "'")
+			pass
+
+		else:
+			shelf = shelves_map[shelf_and_id_list[0]]
+			shelf.remove_book(shelf_and_id_list[1])
+			shelf.save()
+			count += 1
+
+	if count != 0:
+		s = 's' if count != 1 else ''
+		print("removed {} book{}".format(str(count), s))
+
+
 def shelves(args):
 	if len(args) != 0:
 		print("usage: 'shelves'")
@@ -610,6 +647,7 @@ def main():
 		print(" - shelves")
 		print(" - browse <shelf_name>")
 		print(" - addto <shelf_name> (accepts stdin)")
+		print(" - pull (accepts stdin)")
 		print(" - new <shelf_name>")
 		print(" - extend <shelf_name>")
 		print(" - edit (accepts stdin)")
@@ -628,7 +666,8 @@ def main():
 					'edit': edit, 
 					'describe': describe, 
 					'show': show,
-					'shelfsearch': shelfsearch, }
+					'shelfsearch': shelfsearch,
+					'pull': pull, }
 
 	if args[0] in option_dict.keys():
 		option_dict[args[0]](args[1:])
