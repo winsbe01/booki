@@ -174,7 +174,11 @@ def _get_shelves():
 	out = {}
 	for shelf in shelvesdir.iterdir():
 		out[shelf.name] = Shelf(shelf.name)
-	return out
+	dict_keys = sorted(out)
+	sort_out = {}
+	for key in dict_keys:
+		sort_out[key] = out[key]
+	return sort_out
 
 shelves_map = _get_shelves()
 
