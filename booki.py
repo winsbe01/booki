@@ -522,16 +522,19 @@ def new(args):
 	shelf = Shelf(args[0])
 	new_attributes = input("attributes (sep. by comma): ")
 	attr_list = [x.strip() for x in new_attributes.split(',')]
-	print(attr_list)
-	attr_count = 0
-	for att in attr_list:
+	out_count = _add_attributes_to_shelf(attr_list, shelf)
+	shelf.create()
+	print("created shelf: " + shelf.shelf_name)
+
+
+def _add_attributes_to_shelf(attribute_list, shelf):
+	cnt = 0
+	for att in attribute_list:
 		if att != "":
 			ret = shelf.add_attribute(att)
 			if ret:
-				attr_count += 1
-
-	shelf.create()
-	print("created shelf: " + shelf.shelf_name)
+				cnt += 1
+	return cnt
 
 
 def show(args):
@@ -590,14 +593,9 @@ def extend(args):
 
 	new_attributes = input("new attributes (sep. by comma): ")
 	attr_list = [x.strip() for x in new_attributes.split(',')]
-	attr_count = 0
-	for att in attr_list:
-		if att != "":
-			ret = shelf.add_attribute(att)
-			if ret:
-				attr_count += 1
+	out_count = _add_attributes_to_shelf(attr_list, shelf)
 	shelf.save()
-	print("added {} new attribute{} to {}".format(str(attr_count), '' if attr_count == 1 else 's', shelf.shelf_name))
+	print("added {} new attribute{} to {}".format(str(out_count), '' if out_count == 1 else 's', shelf.shelf_name))
 
 
 def edit(args):
