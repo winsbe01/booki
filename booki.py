@@ -228,10 +228,7 @@ def format_book_for_print(book):
 	else:
 		book_id = book['id']
 
-	on_shelves = []
-	for shelf_name, shelf in shelves_map.items():
-		if book_id in shelf.get_universe_books():
-			on_shelves.append(shelf_name)
+	on_shelves = [name for name, shelf in shelves_map.items() if book_id in shelf.get_universe_books()]
 
 	read_marker = "> " if 'read' in on_shelves else ""
 	return "{}  {}{} by {}".format(book['short_id'], read_marker, book['title'], book['author'])
