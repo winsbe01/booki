@@ -171,14 +171,9 @@ def _get_shelves():
 	shelvesdir = Path('~/.config/booki/shelves').expanduser()
 	if not shelvesdir.exists():
 		shelvesdir.mkdir()
-	out = {}
-	for shelf in shelvesdir.iterdir():
-		out[shelf.name] = Shelf(shelf.name)
-	dict_keys = sorted(out)
-	sort_out = {}
-	for key in dict_keys:
-		sort_out[key] = out[key]
-	return sort_out
+
+	shelves = {fil.name: Shelf(fil.name) for fil in shelvesdir.iterdir()}
+	return {name: shelves[name] for name in sorted(shelves)}
 
 shelves_map = _get_shelves()
 
