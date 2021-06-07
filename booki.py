@@ -197,7 +197,7 @@ def user_entry_from_file(in_map, comment=None):
 	after_contents_list = after_contents.strip().split('\n')
 	for line in after_contents_list:
 		if line[0] == "#":
-			pass
+			continue
 		line_list = line.split(':')
 		key = line_list[0].strip()
 		if key in in_map:
