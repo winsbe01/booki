@@ -207,11 +207,7 @@ def user_entry_from_file(in_map, comment=None):
 
 
 def print_books(books):
-	for book in books:
-		print_book(book)
-
-def print_book(book):
-	print(format_book_for_print(book))
+	print("\n".join(map(format_book_for_print, books)))
 
 def format_book_for_print(book):
 
