@@ -20,7 +20,7 @@ json_ext = '.json'
 
 class Shelf:
 
-	shelves_dir = '~/.config/booki/shelves'
+	shelves_dir = '~/.local/share/booki/shelves'
 	default_header = ['id', 'book_id']
 
 	def __init__(self, shelf_name, shelf_path=None):
@@ -159,7 +159,7 @@ class Shelf:
 class Universe(Shelf):
 
 	def __init__(self):
-		super().__init__('theuniverse', '~/.config/booki')
+		super().__init__('theuniverse', '~/.local/share/booki')
 		self.shelf_header = ['id', 'isbn', 'title', 'author', 'page_count']
 
 
@@ -168,7 +168,7 @@ if not universe_o.exists():
 	universe_o.create()
 
 def _get_shelves():
-	shelvesdir = Path('~/.config/booki/shelves').expanduser()
+	shelvesdir = Path('~/.local/share/booki/shelves').expanduser()
 	if not shelvesdir.exists():
 		shelvesdir.mkdir()
 
