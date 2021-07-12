@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 EDITOR = os.environ.get('EDITOR', 'nano')
+BOOK_SHORT_ID_LENGTH = 10
 
 base_url = 'https://openlibrary.org/'
 isbn_url = 'isbn/'
@@ -133,7 +134,7 @@ class Shelf:
 					writer.writerow(book)
 
 	def _get_short_id(self, book):
-		return book['id'][0:10]
+		return book['id'][0:BOOK_SHORT_ID_LENGTH]
 
 	def _get_header_from_shelf(self):
 		with open(str(self.shelf_file), 'r') as fil:
@@ -212,7 +213,7 @@ def print_books(books):
 def format_book_for_print(book):
 
 	if 'short_id' not in book:
-		book['short_id'] = book['id'][0:10]
+		book['short_id'] = book['id'][0:BOOK_SHORT_ID_LENGTH]
 
 	if 'book_id' in book:
 		book_id = book['book_id']
@@ -313,7 +314,7 @@ def discover(args):
 
 def add_book_to_universe(book):
 	book_id = hashlib.sha256(str(book).encode()).hexdigest()
-	if not universe_o.has_book(book_id[0:10]):
+	if not universe_o.has_book(book_id[0:BOOK_SHORT_ID_LENGTH]):
 		book['id'] = book_id
 		universe_o.add_book(book)
 		universe_o.save()
@@ -348,7 +349,7 @@ def _get_books_from_shelf_with_short_ids(shelf):
 	shelf_books = shelf.get_books()
 	for shelf_book_id in shelf_books.keys():
 		shelf_book = shelf_books[shelf_book_id]
-		book = universe_o.get_book(shelf_book['book_id'][0:10]).copy()
+		book = universe_o.get_book(shelf_book['book_id'][0:BOOK_SHORT_ID_LENGTH]).copy()
 		book['short_id'] = "{}.{}".format(shelf.shelf_name, shelf_book_id)
 		book_list.append(book)
 	return book_list
@@ -469,7 +470,7 @@ def pull(args):
 			print("can only pull a book from a shelf")
 			break
 
-		shelf.remove_book(book['id'][0:10])
+		shelf.remove_book(book['id'][0:BOOK_SHORT_ID_LENGTH])
 		shelf.save()
 		count += 1
 
@@ -598,7 +599,7 @@ def edit(args):
 
 		# get the universe book
 		if 'book_id' in book:
-			universe_book = universe_o.get_book(book['book_id'][0:10])
+			universe_book = universe_o.get_book(book['book_id'][0:BOOK_SHORT_ID_LENGTH])
 		else:
 			universe_book = book
 
@@ -621,7 +622,7 @@ def edit(args):
 		# TODO: this should be cleaner, probably part of a book itself
 		if 'short_id' in book:
 			book.pop('short_id')
-		target_shelf.update_book(book['id'][0:10], book)
+		target_shelf.update_book(book['id'][0:BOOK_SHORT_ID_LENGTH], book)
 		target_shelf.save()
 
 		print("updated!")
