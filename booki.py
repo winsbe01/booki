@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 EDITOR = os.environ.get('EDITOR', 'nano')
-BOOK_SHORT_ID_LENGTH = 10
+BOOK_SHORT_ID_LENGTH = 6
 
 base_url = 'https://openlibrary.org/'
 isbn_url = 'isbn/'
