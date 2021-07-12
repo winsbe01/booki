@@ -10,11 +10,10 @@ search for booki books
 * `search <type> <query>` -> search for a book
   * type - either `title` or `author`
   * query - a string to match (can use ^ and/or $ for beginning/end of string)
-* `shelfsearch <shelf_name> <...>` -> search on a given shelf, using the same parameters
 
 manage shelves
 * `shelves` -> list all shelves and their counts
-* `browse <shelf_name>` -> list all books on the given shelf
+* `browse <shelf_name> <<search terms>>` -> list/search books on the given shelf
 * `addto <shelf_name>` -> add book(s) to shelf (book(s) accepted via stdin)
 * `new <shelf_name>` -> create a new shelf
 * `extend <shelf_name>` -> add new attributes to a shelf

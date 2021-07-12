@@ -356,8 +356,8 @@ def _get_books_from_shelf_with_short_ids(shelf):
 
 def browse(args):
 
-	if len(args) != 1:
-		print("usage: browse <shelf_name>")
+	if len(args) < 1:
+		print("usage: browse <shelf_name> <<search info>>")
 		return
 
 	if args[0] not in shelves_map:
@@ -366,21 +366,10 @@ def browse(args):
 
 	shelf = shelves_map[args[0]]
 	book_list = _get_books_from_shelf_with_short_ids(shelf)
-	print_books(book_list)
-
-
-def shelfsearch(args):
-	if len(args) % 2 != 1:
-		print("usage: 'shelfsearch <shelf_name> <...search...>")
-		return
-	
-	if args[0] not in shelves_map:
-		print("no shelf named '" + args[0] + "'")
-		return
-
-	shelf = shelves_map[args[0]]
-	book_list = _get_books_from_shelf_with_short_ids(shelf)
-	search(args[1:], book_list)
+	if len(args) == 1:
+		print_books(book_list)
+	else:
+		search(args[1:], book_list)
 
 
 def search(args, list_to_search=None):
@@ -654,7 +643,7 @@ def main():
 		print(" - search <author|title> <query>")
 		print("manage shelves")
 		print(" - shelves")
-		print(" - browse <shelf_name>")
+		print(" - browse <shelf_name> <<search terms>>")
 		print(" - addto <shelf_name> (accepts stdin)")
 		print(" - pull (accepts stdin)")
 		print(" - new <shelf_name>")
@@ -675,7 +664,6 @@ def main():
 					'edit': edit, 
 					'describe': describe, 
 					'show': show,
-					'shelfsearch': shelfsearch,
 					'pull': pull, }
 
 	if args[0] in option_dict.keys():
