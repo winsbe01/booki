@@ -462,9 +462,7 @@ def pull(args):
 
 	count = 0
 	for line in stdin:
-		shelf_and_book = _get_shelf_book_tuple(line)
-		shelf = shelf_and_book[0]
-		book = shelf_and_book[1]
+		shelf, book = _get_shelf_book_tuple(line)
 
 		if shelf.shelf_name == universe_o.shelf_name: # can't pull a book from the universe
 			print("can only pull a book from a shelf")
@@ -524,13 +522,10 @@ def show(args):
 
 	for line in stdin:
 		
-		shelf_and_book = _get_shelf_book_tuple(line)
-		if not shelf_and_book:
-			print("error: " + str(shelf_and_book))
+		shelf, book = _get_shelf_book_tuple(line)
+		if not shelf or not book:
+			print("error: " + str(shelf) + " " + str(book))
 			break
-
-		shelf = shelf_and_book[0]
-		book = shelf_and_book[1]
 
 		print(line.strip('\n'))
 		headers = shelf.get_header_without_ids()
@@ -587,14 +582,12 @@ def edit(args):
 		print("you can only edit one entry at a time!")
 		return
 
-	shelf_and_book = _get_shelf_book_tuple(stdin[0])
+	target_shelf, book = _get_shelf_book_tuple(stdin[0])
 
-	if not shelf_and_book:
+	if not target_shelf or not book:
 		print("error!")
 		return
 
-	target_shelf = shelf_and_book[0]
-	book = shelf_and_book[1]
 	if book:
 
 		# get the universe book
