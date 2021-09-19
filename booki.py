@@ -461,21 +461,15 @@ def pull(args):
 
 	stdin = list(sys.stdin)
 
-	count = 0
 	for line in stdin:
 		shelf, book = _get_shelf_book_tuple(line)
 
 		if shelf.shelf_name == universe_o.shelf_name: # can't pull a book from the universe
-			print("can only pull a book from a shelf")
 			break
 
 		shelf.remove_book(book['id'][0:BOOK_SHORT_ID_LENGTH])
 		shelf.save()
-		count += 1
-
-	if count != 0:
-		s = 's' if count != 1 else ''
-		print("removed {} book{}".format(str(count), s))
+		print_books([universe_o.get_book(book["book_id"][0:BOOK_SHORT_ID_LENGTH])])
 
 
 def shelves(args):
