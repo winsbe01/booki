@@ -208,7 +208,8 @@ def user_entry_from_file(in_map, comment=None):
 
 
 def print_books(books):
-	print("\n".join(map(format_book_for_print, books)))
+	if len(books) > 0:
+		print("\n".join(map(format_book_for_print, books)))
 
 def format_book_for_print(book):
 
