@@ -15,6 +15,7 @@ manage shelves
 * `shelves` -> list all shelves and their counts
 * `browse <shelf_name> <<search terms>>` -> list/search books on the given shelf
 * `addto <shelf_name>` -> add book(s) to shelf (book(s) accepted via stdin)
+* `pull` -> remove book(s) from a shelf (book(s) accepted via stdin)
 * `new <shelf_name>` -> create a new shelf
 * `extend <shelf_name>` -> add new attributes to a shelf
 * `describe` -> show additional attributes on shelf (if any)
