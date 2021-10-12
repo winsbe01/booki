@@ -546,6 +546,38 @@ def describe(args):
 		print("current attributes of {}: {}".format(shelf.shelf_name, ", ".join(attribute_list)))
 
 
+def findon(args):
+	if len(args) != 1:
+		print("usage: 'findon <shelf_name>'")
+		return
+
+	if args[0] not in shelves_map:
+		print("no shelf named '" + args[0] + "'")
+		return
+
+	shelf = shelves_map[args[0]]
+
+	shelf_books = shelf.get_books()
+	shelf_books_by_universe_id = {book["book_id"][0:BOOK_SHORT_ID_LENGTH]: book["id"][0:BOOK_SHORT_ID_LENGTH] for book in shelf_books.values()}
+
+	stdin = list(sys.stdin)
+
+	for line in stdin:
+		target_shelf, book = _get_shelf_book_tuple(line)
+
+		if target_shelf.shelf_name == shelf.shelf_name:
+			print_books([book])
+			continue
+
+		if target_shelf.shelf_name != "theuniverse":
+			book = universe_o.get_book(book["book_id"][0:BOOK_SHORT_ID_LENGTH])
+
+		if book["id"][0:BOOK_SHORT_ID_LENGTH] in shelf_books_by_universe_id.keys():
+			new_book = shelf.get_book(shelf_books_by_universe_id[book["id"][0:BOOK_SHORT_ID_LENGTH]])
+			book["short_id"] = f"{shelf.shelf_name}.{new_book['id'][0:BOOK_SHORT_ID_LENGTH]}"
+			print_books([book])
+
+
 def extend(args):
 	if len(args) != 1:
 		print("usage: 'extend <shelf_name>'")
@@ -653,7 +685,8 @@ def main():
 					'edit': edit, 
 					'describe': describe, 
 					'show': show,
-					'pull': pull, }
+					'pull': pull, 
+					'findon': findon}
 
 	if args[0] in option_dict.keys():
 		option_dict[args[0]](args[1:])
