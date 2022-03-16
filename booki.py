@@ -56,6 +56,18 @@ def get_book_info_by_hash(cur, book_hash):
     book_info = Book(*cur.fetchone())
     return book_info
 
+def get_book_attributes_by_hash(cur, shelf_book_hash):
+    shelf_name, hsh = shelf_book_hash.split(".")
+    cur.execute("""
+        select sa.name, ba.rowid, ba.value, sa.rowid, sb.rowid from shelves s inner join shelf_books sb
+        on s.rowid = sb.shelf_id inner join shelf_attributes 
+        sa on s.rowid = sa.shelf_id left outer join shelf_book_attribute ba
+        on sb.rowid = ba.shelf_book_id and sa.rowid = ba.shelf_attribute_id 
+        where s.name = ? and sb.hash like ? || '%'
+        """, (shelf_name, hsh))
+    attr_map = {name: (rowid, value, sarowid, sbrowid) for name, rowid, value, sarowid, sbrowid in cur.fetchall()}
+    return attr_map
+
 def get_shelf_book_by_hash(cur, shelf_book_hash):
     shelf_name, hsh = shelf_book_hash.split(".")
     cur.execute("""
@@ -258,6 +270,49 @@ def discover(conn, cur, args):
     user_input = user_entry_from_file(out_map, comment)
     add_book(conn, cur, user_input)
 
+def edit(conn, cur, args):
+    if len(args) != 0:
+        print("usage: 'edit' (with stdin)")
+        return
+
+    stdin = list(sys.stdin)
+    if len(stdin) != 1:
+        print("you can only edit one entry at a time!")
+        return
+
+    shelf_book_hash = stdin[0].split(" ")[0]
+    attr_map = get_book_attributes_by_hash(cur, shelf_book_hash)
+
+    if len(attr_map) == 0:
+        print("no additional data to edit")
+        return
+
+    book_map = {}
+    for key, vals in attr_map.items():
+        val = vals[1] if vals[1] is not None else ""
+        book_map[key] = val
+
+    comment = f"editing on {shelf_book_hash[0]}: {stdin[0].strip()}"
+    user_input = user_entry_from_file(book_map, comment)
+    for key, val in user_input.items():
+        shelf_book_attribute_id, attribute_value, shelf_attribute_id, shelf_book_id = attr_map[key]
+        if val == "" and shelf_book_attribute_id is not None:
+            cur.execute("""
+                delete from shelf_book_attribute where rowid = ?
+            """, (shelf_book_attribute_id,))
+        elif len(val) > 1:
+            if val != attribute_value and shelf_book_attribute_id is not None:
+                cur.execute("""
+                    update shelf_book_attribute set value = ? where rowid = ?
+                """, (val, shelf_book_attribute_id))
+            elif val != attribute_value and shelf_book_attribute_id is None:
+                cur.execute("""
+                    insert into shelf_book_attribute (shelf_book_id, shelf_attribute_id, value)
+                    values (?, ?, ?)
+                """, (shelf_book_id, shelf_attribute_id, val))
+
+        conn.commit()
+
 def pull(conn, cur, args):
     if len(args) != 0:
         print("usage: pull (accepts stdin)")
@@ -414,6 +469,7 @@ def main():
                     'browse': browse, 
                     'describe': describe,
                     'discover': discover,
+                    'edit': edit,
                     'pull': pull,
                     'search': search,
                     'shelves': shelves, 
