@@ -8,6 +8,7 @@ import tempfile
 import hashlib
 import urllib.request
 import json
+import random
 from datetime import datetime
 from pathlib import Path
 
@@ -79,7 +80,9 @@ def get_shelf_book_by_hash(cur, shelf_book_hash):
     return shelf_book_info
 
 def gen_hash(in_val=datetime.now()):
-    return hashlib.sha256(str(in_val).encode()).hexdigest()
+    salt = random.getrandbits(16)
+    new_str = str(in_val) + str(salt)
+    return hashlib.sha256(str(new_str).encode()).hexdigest()
 
 def user_entry_from_file(in_map, comment=None):
 
