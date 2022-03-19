@@ -182,13 +182,34 @@ def addto(conn, cur, args):
         return
 
     shelf_id = shelf_id[0]
+    cur.execute("""
+        select rowid, name from shelf_attributes where shelf_id = ?
+    """, (shelf_id,))
+    attributes = {x[1]: x[0] for x in cur.fetchall()}
 
     stdin = list(sys.stdin)
     for line in stdin:
         book_id = get_book_by_hash(cur, line.split(" ")[0])
+        hsh = gen_hash()
         cur.execute("""
             insert into shelf_books (hash, book_id, shelf_id) values (?, ?, ?)
-        """, (gen_hash(), book_id, shelf_id))
+        """, (hsh, book_id, shelf_id))
+        if len(attributes) != 0:
+            stripped_line = line.strip("\n")
+            out_map = {val: "" for val in attributes.keys()}
+            comment = f"adding to {args[0]}: {stripped_line}"
+            user_input = user_entry_from_file(out_map, comment)
+
+            cur.execute("""
+                select rowid from shelf_books where hash = ?
+            """, (hsh,))
+            shelf_book_id = cur.fetchone()[0]
+            for key, val in user_input.items():
+                if len(val) > 1:
+                    cur.execute("""
+                        insert into shelf_book_attribute (shelf_book_id, shelf_attribute_id, value)
+                            values (?, ?, ?)
+                    """, (shelf_book_id, attributes[key], val))
 
     conn.commit()
 
