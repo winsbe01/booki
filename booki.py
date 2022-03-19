@@ -334,6 +334,34 @@ def edit(conn, cur, args):
 
         conn.commit()
 
+def extend(conn, cur, args):
+    if len(args) != 1:
+        print("usage: 'extend <shelf_name>'")
+        return
+
+    shelf_name = args[0]
+    shelf_query = "select rowid from shelves where name = ?"
+    cur.execute(shelf_query, (shelf_name,))
+    shelf_id = cur.fetchone()
+    if shelf_id is None:
+        print(f"no shelf named '{shelf_name}'")
+        return
+
+    describe(conn, cur, args)
+    new_attributes = input("new attributes (sep. by comma): ")
+    attr_list = [x.strip() for x in new_attributes.split(",")]
+    if len(attr_list) != 0:
+        cur.execute(shelf_query, (shelf_name,))
+        shelf_id = cur.fetchone()[0]
+        to_tuple_list = [(shelf_id, attribute) for attribute in attr_list]
+        cur.executemany("""
+            insert into shelf_attributes (shelf_id, name) values (?, ?)
+        """, to_tuple_list)
+
+    conn.commit()
+    print(f"added {len(attr_list)} new attribute{'' if len(attr_list) == 1 else 's'} to {shelf_name}")
+
+
 def new(conn, cur, args):
     if len(args) != 1:
         print("usage: 'new <shelf_name>'")
@@ -522,6 +550,7 @@ def main():
                     'describe': describe,
                     'discover': discover,
                     'edit': edit,
+                    'extend': extend,
                     'new': new,
                     'pull': pull,
                     'search': search,
