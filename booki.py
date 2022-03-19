@@ -349,7 +349,7 @@ def extend(conn, cur, args):
 
     describe(conn, cur, args)
     new_attributes = input("new attributes (sep. by comma): ")
-    attr_list = [x.strip() for x in new_attributes.split(",")]
+    attr_list = [x.strip() for x in new_attributes.split(",") if x.strip() != ""]
     if len(attr_list) != 0:
         cur.execute(shelf_query, (shelf_name,))
         shelf_id = cur.fetchone()[0]
@@ -380,7 +380,7 @@ def new(conn, cur, args):
     """, (shelf_name,))
 
     new_attributes = input("attributes (sep. by comma): ")
-    attribute_list = [x.strip() for x in new_attributes.split(",")]
+    attribute_list = [x.strip() for x in new_attributes.split(",") if x.strip() != ""]
     if len(attribute_list) != 0:
         cur.execute(shelf_query, (shelf_name,))
         shelf_id = cur.fetchone()[0]
