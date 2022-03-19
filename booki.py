@@ -540,6 +540,8 @@ def main():
         print(" - browse <shelf_name> <<search terms>>")
         print(" - addto <shelf_name> (accepts stdin)")
         print(" - pull (accepts stdin)")
+        print(" - new <shelf_name>")
+        print(" - extend <shelf_name>")
         print(" - describe <shelf_name>")
         print(" - show (accepts stdin)")
         return
