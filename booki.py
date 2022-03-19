@@ -313,6 +313,37 @@ def edit(conn, cur, args):
 
         conn.commit()
 
+def new(conn, cur, args):
+    if len(args) != 1:
+        print("usage: 'new <shelf_name>'")
+        return
+
+    shelf_name = args[0]
+    shelf_query = "select rowid from shelves where name = ?"
+    cur.execute(shelf_query, (shelf_name,))
+    shelf_id = cur.fetchone()
+    if shelf_id is not None:
+        print(f"already have a shelf named '{shelf_name}'!")
+        return
+
+    cur.execute("""
+        insert into shelves (name) values (?)
+    """, (shelf_name,))
+
+    new_attributes = input("attributes (sep. by comma): ")
+    attribute_list = [x.strip() for x in new_attributes.split(",")]
+    if len(attribute_list) != 0:
+        cur.execute(shelf_query, (shelf_name,))
+        shelf_id = cur.fetchone()[0]
+        to_tuple_list = [(shelf_id, attribute) for attribute in attribute_list]
+        print(to_tuple_list)
+        cur.executemany("""
+            insert into shelf_attributes (shelf_id, name) values (?, ?)
+        """, to_tuple_list)
+    print(f"created shelf '{shelf_name}' with {len(attribute_list)} attribute{'' if len(attribute_list) == 1 else 's'}")
+    conn.commit()
+ 
+
 def pull(conn, cur, args):
     if len(args) != 0:
         print("usage: pull (accepts stdin)")
@@ -470,6 +501,7 @@ def main():
                     'describe': describe,
                     'discover': discover,
                     'edit': edit,
+                    'new': new,
                     'pull': pull,
                     'search': search,
                     'shelves': shelves, 
