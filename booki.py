@@ -507,12 +507,13 @@ def show(conn, cur, args):
         print(line.strip("\n"))
         shelf_book = line.split(" ")[0]
         if "." in shelf_book:
+            shelf_name = shelf_book.split(".")[0]
             shelf_book_id, book_id = get_shelf_book_by_hash(cur, shelf_book)
             attrs = {name: value for name, value in cur.execute("""
-                select sa.name, sba.value from shelf_attributes sa
-                inner join shelf_book_attribute sba on sa.rowid = sba.shelf_attribute_id
-                where sba.shelf_book_id = ?
-            """,(shelf_book_id,))}
+                select sa.name, sba.value from shelves s inner join shelf_attributes 
+                sa on s.rowid = sa.shelf_id inner join shelf_book_attribute sba on 
+                sa.rowid = sba.shelf_attribute_id where sba.shelf_book_id = ? and s.name = ?
+            """,(shelf_book_id,shelf_name))}
         else:
             book_id = get_book_by_hash(cur, shelf_book)
             
