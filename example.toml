@@ -1,0 +1,15 @@
+[[books]]
+isbn = "9781779501127"
+title = "Watchmen"
+author = [ "Alan Moore", "Dave Gibbons" ]
+published = "1987"
+on = [ "own", "read" ]
+
+[[books]]
+isbn = "9780679734505"
+title = "Crime and Punishment"
+author = "Fyodor Dostoyevsky"
+pages = 564
+language = "Russian"
+published = "1884"
+on = [ "own" ]
