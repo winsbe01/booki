@@ -1,18 +1,40 @@
 #!/usr/bin/env python3
 import tomllib
+import os
+import subprocess
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 BOOKI_FILE = Path("~/.local/share/booki/books.toml").expanduser()
+EDITOR = os.environ.get("EDITOR", "nano")
 OPERATIONAL = ["subcommand", "show"]
 
 
 def load_books():
     with open(BOOKI_FILE, "rb") as fil:
         data = tomllib.load(fil)
+    write_books(data["books"])
     return data["books"]
 
+def format_datum(datum):
+    if isinstance(datum, str):
+        q = "'" if '"' in datum else '"'
+        return f"{q}{datum}{q}"
+    elif isinstance(datum, list):
+        inner = ", ".join([format_datum(item) for item in datum])
+        return f"[ {inner} ]"
+    else:
+        return datum
+
+def write_books(books):
+    with open("out.toml", "w") as fil:
+        for book in books:
+            fil.write("[[books]]\n")
+            for key, val in book.items():
+                fil.write(f"{key} = {format_datum(val)}\n")
+            fil.write("\n")
 
 def format_authors(authors):
     if isinstance(authors, str):
@@ -59,6 +81,28 @@ def filter_items(items, query):
     else:
         return filter_single(items, query)
 
+
+def user_entry_from_file(book):
+    with NamedTemporaryFile(delete=False) as tmpfil:
+        for key, val in book.items():
+            tmpfil.write(f"{key} = {format_datum(val)}\n".encode("utf-8"))
+        tmpfil.flush()
+        subprocess.run([EDITOR, tmpfil.name], stdin=sys.stdout)
+        with open(tmpfil.name, "rb") as newfil:
+            contents = tomllib.load(newfil)
+        os.unlink(tmpfil.name)
+    return contents
+
+def edit(book):
+    target_id = book["id"]
+    fixed = user_entry_from_file(book)
+    books = load_books()
+    for idx, item in enumerate(books):
+        if item["id"] == fixed["id"]:
+            books[idx] = fixed
+            break
+    write_books(books)
+    return fixed
 
 def search(fltr):
     books = load_books()
@@ -133,6 +177,13 @@ def main():
         sys.exit(1)
 
     books = commands[subcommand](args)
+
+    if "--edit" in extras:
+        if len(books) != 1:
+            print(f"you can only edit one entry at a time! (got {len(books)})")
+            return
+        books = [edit(books[0])]
+
     books_sorted = sort_books(books)
     if "--show" in extras:
         show_books(books_sorted)
