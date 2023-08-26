@@ -19,8 +19,9 @@ def load_books():
     return data["books"]
 
 
-def get_attrs():
-    books = load_books()
+def get_attrs(books=None):
+    if not books:
+        books = load_books()
     attrs = []
     for book in books:
         for key in book:
@@ -126,6 +127,16 @@ def user_entry_from_file(book, err=None):
         os.unlink(tmpfil.name)
     return contents
 
+def add(_):
+    books = load_books()
+    attrs = get_attrs(books)
+    empty_book = {attr: "" for attr in attrs if attr != "id"}
+    filled_book = user_entry_from_file(empty_book)
+    books.append(filled_book)
+    write_books(books)
+    show_books([filled_book])
+    return []
+
 def edit(book):
     target_id = book["id"]
     fixed = user_entry_from_file(book)
@@ -198,7 +209,7 @@ def main():
     args, extras = parse_args(sys.argv[1:], attrs)
 
     commands = {
-        #"add": add,
+        "add": add,
         #"discover": discover,
         "search": search,
         "shelves": shelves,
