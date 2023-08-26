@@ -82,14 +82,28 @@ def filter_items(items, query):
         return filter_single(items, query)
 
 
-def user_entry_from_file(book):
+def user_entry_from_file(book, err=None):
     with NamedTemporaryFile(delete=False) as tmpfil:
         for key, val in book.items():
             tmpfil.write(f"{key} = {format_datum(val)}\n".encode("utf-8"))
         tmpfil.flush()
-        subprocess.run([EDITOR, tmpfil.name], stdin=sys.stdout)
-        with open(tmpfil.name, "rb") as newfil:
-            contents = tomllib.load(newfil)
+
+        while True:
+            subprocess.run([EDITOR, tmpfil.name], stdin=sys.stdout)
+            with open(tmpfil.name, "rb") as newfil:
+                try:
+                    contents = tomllib.load(newfil)
+                    break
+                except tomllib.TOMLDecodeError as err:
+                    print(f"parse error: {err}")
+                    resp = input("edit again? (y/n) ")
+                    if resp.lower() == "y":
+                        continue
+
+                    # we aren't re-editing, so we'll keep the original
+                    print("aborting edit")
+                    contents = book
+                    break
         os.unlink(tmpfil.name)
     return contents
 
