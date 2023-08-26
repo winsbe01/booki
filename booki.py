@@ -18,6 +18,17 @@ def load_books():
     write_books(data["books"])
     return data["books"]
 
+
+def get_attrs():
+    books = load_books()
+    attrs = []
+    for book in books:
+        for key in book:
+            if key not in attrs:
+                attrs.append(key)
+    return attrs
+
+
 def format_datum(datum):
     if isinstance(datum, str):
         q = "'" if '"' in datum else '"'
@@ -66,7 +77,15 @@ def sort_books(books, sort_by):
 
 
 def filter_single(item, query):
-    return query.lower() in item.lower()
+    if isinstance(item, str):
+        return query.lower() in item.lower()
+    try:
+        int_item = int(item)
+        int_query = int(query)
+        return int_query == int_item
+    except ValueError:
+        print(f"{item} is not an int?")
+        return False
 
 
 def filter_list(items, query):
@@ -149,7 +168,7 @@ def shelves(_):
     return []
 
 
-def parse_args(args):
+def parse_args(args, book_attrs):
     parser = ArgumentParser()
     parser.add_argument("--show", action="store_true")
     subs = parser.add_subparsers(required=True, dest="subcommand")
@@ -157,9 +176,8 @@ def parse_args(args):
     discover_parser = subs.add_parser("discover")
     discover_parser.add_argument("isbn")
     search_parser = subs.add_parser("search")
-    search_parser.add_argument("-t", "--title", type=str, nargs="+")
-    search_parser.add_argument("-a", "--author", type=str, nargs="+")
-    search_parser.add_argument("-o", "--on", type=str, nargs="+")
+    for attr in book_attrs:
+        search_parser.add_argument(f"--{attr}", type=str, nargs="+")
     shelves_parser = subs.add_parser("shelves")
     return parser.parse_known_args(args)
     #return parser.parse_known_intermixed_args(args)
@@ -176,7 +194,8 @@ def sort_books(books):
 
 
 def main():
-    args, extras = parse_args(sys.argv[1:])
+    attrs = get_attrs()
+    args, extras = parse_args(sys.argv[1:], attrs)
 
     commands = {
         #"add": add,
