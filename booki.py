@@ -7,6 +7,7 @@ import sys
 import urllib.request
 from argparse import ArgumentParser
 from pathlib import Path
+from shutil import copy2
 from tempfile import NamedTemporaryFile
 
 BOOKI_FILE = Path("~/.local/share/booki/books.toml").expanduser()
@@ -43,7 +44,8 @@ def format_datum(datum):
         return datum
 
 def write_books(books):
-    with open("out.toml", "w") as fil:
+    copy2(f"{BOOKI_FILE}", f"{BOOKI_FILE}.bak")
+    with open(f"{BOOKI_FILE}", "w") as fil:
         for book in books:
             fil.write("[[books]]\n")
             for key, val in book.items():
