@@ -43,6 +43,9 @@ def format_datum(datum):
     else:
         return datum
 
+def next_id(books):
+    return max(book.get("id", 0) for book in books) + 1
+
 def write_books(books):
     copy2(f"{BOOKI_FILE}", f"{BOOKI_FILE}.bak")
     with open(f"{BOOKI_FILE}", "w") as fil:
@@ -159,6 +162,7 @@ def discover(args):
     books = load_books()
     attrs = get_attrs(books)
     book_dict = {attr: None for attr in attrs if attr != "id"}
+    book_dict["id"] = next_id(books)
     book_dict["isbn"] = args.isbn
     book_dict["title"] = json_obj.get("title", None)
     book_dict["author"] = json_obj.get("by_statement", None)
