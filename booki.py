@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import tomllib
+import json
 import os
 import subprocess
 import sys
+import urllib.request
 from argparse import ArgumentParser
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -137,6 +139,56 @@ def add(_):
     show_books([filled_book])
     return []
 
+def discover(args):
+    base_url = "https://openlibrary.org"
+    isbn_url = "isbn"
+
+    full_isbn_url = f"{base_url}/{isbn_url}/{args.isbn}.json"
+    with urllib.request.urlopen(full_isbn_url) as url:
+        json_text = url.read().decode("utf-8")
+
+    try:
+        json_obj = json.loads(json_text)
+    except json.decoder.JSONDecodeError as err:
+        print(f"error with {args.isbn}: {err}")
+        return []
+
+    # fields i'm interested in
+    books = load_books()
+    attrs = get_attrs(books)
+    book_dict = {attr: None for attr in attrs if attr != "id"}
+    book_dict["isbn"] = args.isbn
+    book_dict["title"] = json_obj.get("title", None)
+    book_dict["author"] = json_obj.get("by_statement", None)
+    book_dict["pages"] = json_obj.get("number_of_pages", None)
+
+    # get author things
+    authors = json_obj.get("authors", None)
+    if authors:
+        names = []
+        for author in authors:
+            full_author_url = f"{base_url}/{author['key']}.json"
+            with urllib.request.urlopen(full_author_url) as url:
+                author_json_text = url.read().decode("utf-8")
+
+            try:
+                author_json_obj = json.loads(author_json_text)
+            except json.decoder.JSONDecodeError:
+                author_json_obj = None
+
+            if author_json_obj:
+                if name := author_json_obj.get("name", None):
+                    names.append(name)
+        if len(names) == 1:
+            book_dict["author"] = names[0]
+        else:
+            book_dict["author"] = names
+
+    filled_book = user_entry_from_file(book_dict)
+    books.append(filled_book)
+    write_books(books)
+    return [filled_book]
+
 def edit(book):
     target_id = book["id"]
     fixed = user_entry_from_file(book)
@@ -210,7 +262,7 @@ def main():
 
     commands = {
         "add": add,
-        #"discover": discover,
+        "discover": discover,
         "search": search,
         "shelves": shelves,
     }
